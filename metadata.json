@@ -1,0 +1,5 @@
+{
+  "name": "Apex ERP",
+  "description": "A commercial-grade, desktop-first ERP for inventory, CRM, and sales management with a local-first architecture and license enforcement.",
+  "requestFramePermissions": []
+}
