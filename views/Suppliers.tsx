@@ -1,11 +1,10 @@
 
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Supplier } from '../types';
 import { backendService } from '../services/backendSimulator';
 import { currencyService } from '../services/currencyService';
 import { Icons } from '../constants';
 import { AppContext } from '../context';
-import { motion, AnimatePresence } from 'framer-motion';
 
 const Suppliers: React.FC = () => {
   const { t, currency } = useContext(AppContext);
@@ -21,7 +20,9 @@ const Suppliers: React.FC = () => {
     setSuppliers(data);
   };
 
-  useEffect(() => { fetch(); }, []);
+  useEffect(() => {
+    fetch();
+  }, []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -48,7 +49,7 @@ const Suppliers: React.FC = () => {
   };
 
   const handleEdit = (s: Supplier) => {
-    setFormData(s);
+    setFormData({ ...s });
     setEditId(s.id);
     setShowModal(true);
   };
@@ -110,42 +111,36 @@ const Suppliers: React.FC = () => {
         ))}
       </div>
 
-      <AnimatePresence>
-        {showModal && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-6 overflow-y-auto">
-             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-white rounded-[4rem] w-full max-w-lg shadow-2xl overflow-hidden">
-                <div className="bg-slate-900 p-10 text-white">
-                   <h3 className="text-3xl font-black tracking-tight">{editId ? t.edit : 'Register Vendor'}</h3>
-                   <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2">Supply Chain Node Configuration</p>
-                </div>
-                <div className="p-10 space-y-6">
-                   <div className="flex justify-center mb-4">
-                     <div className="w-24 h-24 rounded-[2rem] bg-slate-50 border-4 border-dashed border-slate-100 flex items-center justify-center overflow-hidden relative group hover:border-blue-500 transition-all cursor-pointer">
-                        {formData.image ? <img src={formData.image} className="w-full h-full object-cover" /> : <Icons.Plus />}
-                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleImageUpload} accept="image/*" />
-                     </div>
+      {showModal && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-6 overflow-y-auto">
+           <div className="bg-white rounded-[4rem] w-full max-w-lg shadow-2xl overflow-hidden">
+              <div className="bg-slate-900 p-10 text-white">
+                 <h3 className="text-3xl font-black tracking-tight">{editId ? t.edit : 'Register Vendor'}</h3>
+                 <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2">Supply Chain Node Configuration</p>
+              </div>
+              <div className="p-10 space-y-6">
+                 <div className="flex justify-center mb-4">
+                   <div className="w-24 h-24 rounded-[2rem] bg-slate-50 border-4 border-dashed border-slate-100 flex items-center justify-center overflow-hidden relative group hover:border-blue-500 transition-all cursor-pointer">
+                      {formData.image ? <img src={formData.image} className="w-full h-full object-cover" /> : <Icons.Plus />}
+                      <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleImageUpload} accept="image/*" />
                    </div>
-                   <div className="space-y-1">
-                      <span className="text-[9px] font-black text-slate-500 uppercase ml-2">{t.official_name}</span>
-                      <input type="text" placeholder="Vendor Entity" value={formData.name} className="w-full p-5 bg-slate-50 border border-slate-200 rounded-[2rem] outline-none font-bold text-sm focus:bg-white focus:border-slate-900 transition-all" onChange={e => setFormData({...formData, name: e.target.value})}/>
-                   </div>
-                   <div className="space-y-1">
-                      <span className="text-[9px] font-black text-slate-500 uppercase ml-2">Electronic Mail</span>
-                      <input type="email" placeholder="contact@provider.com" value={formData.email} className="w-full p-5 bg-slate-50 border border-slate-200 rounded-[2rem] outline-none font-bold text-sm focus:bg-white focus:border-slate-900 transition-all" onChange={e => setFormData({...formData, email: e.target.value})}/>
-                   </div>
-                   <div className="space-y-1">
-                      <span className="text-[9px] font-black text-slate-500 uppercase ml-2">Market Segment</span>
-                      <input type="text" placeholder="e.g. Technology, Raw Materials" value={formData.category} className="w-full p-5 bg-slate-50 border border-slate-200 rounded-[2rem] outline-none font-bold text-sm focus:bg-white focus:border-slate-900 transition-all" onChange={e => setFormData({...formData, category: e.target.value})}/>
-                   </div>
-                   <div className="flex gap-6 pt-6">
-                      <button onClick={() => {setShowModal(false); setEditId(null);}} className="flex-1 py-5 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900">{t.cancel}</button>
-                      <button onClick={handleSubmit} className="flex-1 py-5 bg-slate-900 text-white rounded-[2rem] text-xs font-black uppercase tracking-widest shadow-2xl active:scale-95 transition-all">Persist Partner</button>
-                   </div>
-                </div>
-             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                 </div>
+                 <div className="space-y-1">
+                    <span className="text-[9px] font-black text-slate-500 uppercase ml-2">{t.official_name}</span>
+                    <input type="text" placeholder="Vendor Entity" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-5 bg-slate-50 border border-slate-200 rounded-[2rem] outline-none font-bold text-sm focus:bg-white focus:border-slate-900 transition-all" />
+                 </div>
+                 <div className="space-y-1">
+                    <span className="text-[9px] font-black text-slate-500 uppercase ml-2">Electronic Mail</span>
+                    <input type="email" placeholder="contact@provider.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full p-5 bg-slate-50 border border-slate-200 rounded-[2rem] outline-none font-bold text-sm focus:bg-white focus:border-slate-900 transition-all" />
+                 </div>
+                 <div className="flex gap-6 pt-6">
+                    <button onClick={() => {setShowModal(false); setEditId(null);}} className="flex-1 py-5 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900">Cancel</button>
+                    <button onClick={handleSubmit} className="flex-1 py-5 bg-slate-900 text-white rounded-[2rem] text-xs font-black uppercase tracking-widest shadow-2xl active:scale-95 transition-all">Persist Partner</button>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
     </div>
   );
 };

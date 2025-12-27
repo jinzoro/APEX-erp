@@ -1,5 +1,5 @@
 
-import React from 'react';
+import { createContext } from 'react';
 import { Language, CurrencyCode } from './types';
 
 export interface AppContextType {
@@ -9,4 +9,4 @@ export interface AppContextType {
   t: any;
 }
 
-export const AppContext = React.createContext<AppContextType>(null!);
+export const AppContext = createContext<AppContextType>(null!);
