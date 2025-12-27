@@ -26,6 +26,7 @@ export interface CompanyInfo {
   ice: string; // Moroccan Identifiant Commun de l'Entreprise
   if: string;  // Identifiant Fiscal
   taxId: string;
+  primaryColor?: string; // Hex code for theme
 }
 
 export interface Product {

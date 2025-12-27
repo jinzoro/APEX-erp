@@ -40,7 +40,6 @@ const saveDB = (state: DBState) => {
 };
 
 export const backendService = {
-  // Fix: Added checkLicense to provide machine identification for activation
   async checkLicense(): Promise<{ machineId: string }> {
     let mid = localStorage.getItem('APEX_MACHINE_ID');
     if (!mid) {
@@ -50,7 +49,6 @@ export const backendService = {
     return { machineId: mid };
   },
 
-  // Fix: Added activateLicense to handle system authorization logic
   async activateLicense(key: string): Promise<boolean> {
     if (key && key.startsWith('APEX-') && key.length > 10) {
       localStorage.setItem('APEX_LIC_ACTIVE', 'true');
@@ -62,12 +60,12 @@ export const backendService = {
 
   async getCompanyInfo(): Promise<CompanyInfo> {
     const data = localStorage.getItem(COMPANY_KEY);
-    return data ? JSON.parse(data) : { name: 'Apex Enterprise', address: '', phone: '', email: '', ice: '', if: '', taxId: '' };
+    return data ? JSON.parse(data) : { name: 'Apex Enterprise', address: '', phone: '', email: '', ice: '', if: '', taxId: '', primaryColor: '#2563eb' };
   },
 
   async saveCompanyInfo(info: CompanyInfo) {
     localStorage.setItem(COMPANY_KEY, JSON.stringify(info));
-    this.logAction('Settings Updated', 'Company profile information was modified');
+    this.logAction('Settings Updated', 'Company profile and aesthetics modified');
   },
 
   async factoryReset() {
