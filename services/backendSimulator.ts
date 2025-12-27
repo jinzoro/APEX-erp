@@ -1,8 +1,7 @@
 
-import { Product, Customer, DashboardStats, LicenseStatus, Employee, Transaction, Sale, Supplier, CompanyInfo, AuditLog, TimeRange, SalesHistoryPoint } from '../types';
+import { Product, Customer, DashboardStats, Employee, Transaction, Sale, Supplier, CompanyInfo, AuditLog, TimeRange, SalesHistoryPoint } from '../types';
 
 const DB_KEY = 'APEX_ERP_PRODUCTION_DB_V10';
-const HWID_KEY = 'APEX_SYS_HWID_V4';
 const COMPANY_KEY = 'APEX_COMPANY_PROFILE_V1';
 
 interface DBState {
@@ -14,19 +13,7 @@ interface DBState {
   sales: Sale[];
   auditLogs: AuditLog[];
   orderCounter: number;
-  license: LicenseStatus & { hashedKey?: string };
 }
-
-const getMachineID = (): string => {
-  let id = localStorage.getItem(HWID_KEY);
-  if (!id) {
-    id = `APX-882A-7721-FF09`;
-    localStorage.setItem(HWID_KEY, id);
-  }
-  return id;
-};
-
-const MACHINE_ID = getMachineID();
 
 const emptyState: DBState = {
   products: [],
@@ -36,15 +23,13 @@ const emptyState: DBState = {
   transactions: [],
   sales: [],
   auditLogs: [],
-  orderCounter: 0,
-  license: { isActivated: false, machineId: MACHINE_ID }
+  orderCounter: 0
 };
 
 const getDB = (): DBState => {
   const data = localStorage.getItem(DB_KEY);
   if (!data) return emptyState;
   const parsed = JSON.parse(data);
-  parsed.license.machineId = MACHINE_ID;
   if (parsed.orderCounter === undefined) parsed.orderCounter = 0;
   if (!parsed.auditLogs) parsed.auditLogs = [];
   return parsed;
@@ -55,6 +40,26 @@ const saveDB = (state: DBState) => {
 };
 
 export const backendService = {
+  // Fix: Added checkLicense to provide machine identification for activation
+  async checkLicense(): Promise<{ machineId: string }> {
+    let mid = localStorage.getItem('APEX_MACHINE_ID');
+    if (!mid) {
+      mid = 'APX-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+      localStorage.setItem('APEX_MACHINE_ID', mid);
+    }
+    return { machineId: mid };
+  },
+
+  // Fix: Added activateLicense to handle system authorization logic
+  async activateLicense(key: string): Promise<boolean> {
+    if (key && key.startsWith('APEX-') && key.length > 10) {
+      localStorage.setItem('APEX_LIC_ACTIVE', 'true');
+      this.logAction('System Activation', `Node authorized with key: ${key}`);
+      return true;
+    }
+    return false;
+  },
+
   async getCompanyInfo(): Promise<CompanyInfo> {
     const data = localStorage.getItem(COMPANY_KEY);
     return data ? JSON.parse(data) : { name: 'Apex Enterprise', address: '', phone: '', email: '', ice: '', if: '', taxId: '' };
@@ -66,12 +71,7 @@ export const backendService = {
   },
 
   async factoryReset() {
-    const db = getDB();
-    const license = db.license; // Preserve activation key and machine ID
-    const newState = { ...emptyState, license };
-    saveDB(newState);
-    localStorage.removeItem(COMPANY_KEY); // Wipe company branding/info too
-    // No hard reload here; caller handles it for better UX
+    localStorage.clear();
   },
 
   logAction(action: string, details: string) {
@@ -89,10 +89,7 @@ export const backendService = {
 
   async getAuditLogs(): Promise<AuditLog[]> {
     const db = getDB();
-    return db.auditLogs.map(log => ({
-      ...log,
-      details: log.details.replace(/APEX-[A-Z0-9-]+/g, 'APEX-***********')
-    }));
+    return db.auditLogs;
   },
 
   generateRandomString(length: number): string {
@@ -129,21 +126,6 @@ export const backendService = {
     db.orderCounter++;
     saveDB(db);
     return orderNumber;
-  },
-
-  async checkLicense(): Promise<LicenseStatus> {
-    const db = getDB();
-    const status = { ...db.license };
-    if (status.licenseKey) status.licenseKey = `APEX-***********`;
-    return status;
-  },
-
-  async activateLicense(key: string): Promise<boolean> {
-    const db = getDB();
-    db.license = { isActivated: true, licenseKey: key, machineId: MACHINE_ID, expiryDate: 'PERPETUAL' };
-    saveDB(db);
-    this.logAction('License Activated', `Node authorized successfully for Machine ID: ${MACHINE_ID}`);
-    return true;
   },
 
   async getCollection<K extends keyof DBState>(key: K): Promise<DBState[K]> {

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { AppView, LicenseStatus, Language, CurrencyCode } from './types';
+import { AppView, Language, CurrencyCode } from './types';
 import { backendService } from './services/backendSimulator';
 import { currencyService } from './services/currencyService';
 import { translations } from './translations';
@@ -15,7 +15,6 @@ import Customers from './views/Customers';
 import Finance from './views/Finance';
 import Settings from './views/Settings';
 import AuditLogView from './views/AuditLogView';
-import LicenseActivation from './components/LicenseActivation';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ViewRenderer: React.FC<{ 
@@ -48,7 +47,6 @@ const ViewRenderer: React.FC<{
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>(AppView.DASHBOARD);
-  const [license, setLicense] = useState<LicenseStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   const [lang, setLang] = useState<Language>(() => (localStorage.getItem('APEX_LANG') as Language) || 'EN');
@@ -57,11 +55,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const initApp = async () => {
-      const [status, liveRates] = await Promise.all([
-        backendService.checkLicense(),
-        currencyService.getRates()
-      ]);
-      setLicense(status);
+      const liveRates = await currencyService.getRates();
       setRates(liveRates);
       setTimeout(() => setIsLoading(false), 800);
     };
@@ -93,12 +87,6 @@ const App: React.FC = () => {
   return (
     <AppContext.Provider value={{ lang, currency, rates, t }}>
       <div className={`flex h-screen w-screen overflow-hidden bg-slate-50 text-slate-900 ${lang === 'AR' ? 'font-arabic' : ''}`}>
-        <AnimatePresence>
-          {license && !license.isActivated && (
-            <LicenseActivation onActivated={() => backendService.checkLicense().then(setLicense)} />
-          )}
-        </AnimatePresence>
-
         <Sidebar currentView={view} onViewChange={setView} onLogout={() => window.location.reload()} />
 
         <main className="flex-1 relative overflow-hidden flex flex-col bg-white/40 shadow-inner">

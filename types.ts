@@ -140,10 +140,3 @@ export interface DashboardStats {
   salesHistory: SalesHistoryPoint[];
   madRates: { code: string; rate: number }[];
 }
-
-export interface LicenseStatus {
-  isActivated: boolean;
-  licenseKey?: string;
-  expiryDate?: string;
-  machineId?: string;
-}

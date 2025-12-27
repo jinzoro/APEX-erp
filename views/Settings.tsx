@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useContext } from 'react';
 import { backendService } from '../services/backendSimulator';
-import { LicenseStatus, Language, CurrencyCode, CompanyInfo, AppView } from '../types';
+import { Language, CurrencyCode, CompanyInfo, AppView } from '../types';
 import { AppContext } from '../context';
 import { Icons } from '../constants';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,7 +16,6 @@ interface SettingsProps {
 
 const Settings: React.FC<SettingsProps> = ({ lang, setLang, currency, setCurrency, onViewChange }) => {
   const { t, rates } = useContext(AppContext);
-  const [license, setLicense] = useState<LicenseStatus | null>(null);
   const [originalCompany, setOriginalCompany] = useState<CompanyInfo | null>(null);
   const [currentCompany, setCurrentCompany] = useState<CompanyInfo>({
     name: '', address: '', phone: '', email: '', ice: '', if: '', taxId: ''
@@ -27,7 +26,6 @@ const Settings: React.FC<SettingsProps> = ({ lang, setLang, currency, setCurrenc
   const [isPurging, setIsPurging] = useState(false);
 
   useEffect(() => {
-    backendService.checkLicense().then(setLicense);
     backendService.getCompanyInfo().then(info => {
       setOriginalCompany(info);
       setCurrentCompany(info);
@@ -209,22 +207,19 @@ const Settings: React.FC<SettingsProps> = ({ lang, setLang, currency, setCurrenc
              </div>
           </button>
 
-          <div className="bg-slate-950 p-12 rounded-[4.5rem] text-white shadow-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/20 blur-[80px] group-hover:bg-blue-600/40 transition-all duration-1000" />
+          <div className="bg-slate-950 p-12 rounded-[4.5rem] text-white shadow-2xl relative overflow-hidden group border border-rose-500/20">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-rose-600/10 blur-[80px]" />
             <div className="relative z-10">
               <div className="flex items-center gap-4 mb-10">
-                <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center font-black text-2xl shadow-2xl shadow-blue-600/30">A</div>
-                <h4 className="text-2xl font-black tracking-tighter">Apex Core v4.0</h4>
+                <div className="w-16 h-16 bg-rose-600 rounded-3xl flex items-center justify-center font-black text-2xl shadow-2xl shadow-rose-600/30">
+                  <Icons.Alert />
+                </div>
+                <h4 className="text-2xl font-black tracking-tighter">System Control</h4>
               </div>
               <div className="space-y-8">
-                <div className="p-7 bg-white/5 rounded-[2.5rem] border border-white/5 backdrop-blur-md">
-                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3">Workstation ID Signature</p>
-                  <p className="font-mono text-xs text-blue-400 break-all leading-relaxed tracking-tighter select-all">{license?.machineId}</p>
-                </div>
-                <div className="p-7 bg-emerald-500/10 rounded-[2.5rem] border border-emerald-500/20">
-                  <p className="text-[9px] font-black text-emerald-500 uppercase mb-2">Node Licensing Status</p>
-                  <p className="text-sm font-black text-white tracking-widest">AUTHORIZED • PERPETUAL ACCESS</p>
-                </div>
+                <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                  The local database is stored within your browser's persistent storage. Perform a factory reset only if you wish to clear all business records and start from scratch.
+                </p>
                 <button 
                   onClick={() => setShowResetConfirm(true)}
                   className="w-full py-6 bg-rose-600/10 text-rose-500 border border-rose-500/20 rounded-[2.5rem] font-black text-[10px] uppercase tracking-[0.3em] hover:bg-rose-600 hover:text-white transition-all shadow-inner"
@@ -333,11 +328,7 @@ const Settings: React.FC<SettingsProps> = ({ lang, setLang, currency, setCurrenc
                      <div className="space-y-4">
                         <p className="text-slate-900 font-black text-xl tracking-tight">Are you absolutely certain?</p>
                         <p className="text-slate-400 text-sm font-medium leading-relaxed">
-                          All business records, personnel files, inventory logs, and transaction history will be <strong className="text-rose-600">permanently deleted</strong>. This action is irreversible. 
-                          <br/><br/>
-                          <span className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500">
-                             License status will be preserved
-                          </span>
+                          All business records, personnel files, inventory logs, company settings, and transaction history will be <strong className="text-rose-600">permanently deleted</strong>. This action is irreversible.
                         </p>
                      </div>
 
