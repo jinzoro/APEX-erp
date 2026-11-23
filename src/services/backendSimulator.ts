@@ -15,10 +15,13 @@ interface DBState {
   accounts: any[];
   journalEntries: any[];
   payrollRates: any[];
+  stockMovements: any[];
+  deliveryNotes: any[];
   auditLogs: AuditLog[];
   orderCounter: number;
   orderCountersByYear?: Record<string, number>;
   creditNoteCounter?: number;
+  deliveryNoteCounter?: number;
 }
 
 const emptyState: DBState = {
@@ -32,6 +35,8 @@ const emptyState: DBState = {
   accounts: [],
   journalEntries: [],
   payrollRates: [],
+  stockMovements: [],
+  deliveryNotes: [],
   auditLogs: [],
   orderCounter: 0
 };
@@ -47,6 +52,8 @@ const getDB = (): DBState => {
   if (!parsed.accounts) parsed.accounts = [];
   if (!parsed.journalEntries) parsed.journalEntries = [];
   if (!parsed.payrollRates) parsed.payrollRates = [];
+  if (!parsed.stockMovements) parsed.stockMovements = [];
+  if (!parsed.deliveryNotes) parsed.deliveryNotes = [];
   return parsed;
 };
 
@@ -174,6 +181,17 @@ export const backendService = {
         if (prod) {
           if (isSale) prod.stock -= basketItem.quantity;
           else prod.stock += basketItem.quantity;
+          db.stockMovements.push({
+            id: Math.random().toString(36).substr(2,9),
+            date: order.date || new Date().toISOString(),
+            productId: basketItem.productId,
+            productName: basketItem.name,
+            warehouse: prod.warehouse || 'Principal',
+            type: isSale ? 'OUT' : 'IN',
+            quantity: basketItem.quantity,
+            unitCost: basketItem.price,
+            reference: order.orderNumber,
+          });
         }
       });
 
@@ -247,6 +265,15 @@ export const backendService = {
   async getSuppliers() { return this.getCollection('suppliers'); },
   async getSales() { return this.getCollection('sales'); },
   async getCreditNotes() { return this.getCollection('creditNotes'); },
+  async getDeliveryNotes() { return this.getCollection('deliveryNotes'); },
+  async getStockMovements() { return this.getCollection('stockMovements'); },
+  async generateNextDeliveryNoteNumber(): Promise<string> {
+    const db = getDB();
+    if (!db.deliveryNoteCounter) db.deliveryNoteCounter = 0;
+    db.deliveryNoteCounter++;
+    saveDB(db);
+    return `BL-${new Date().getFullYear()}-${String(db.deliveryNoteCounter).padStart(6,'0')}`;
+  },
   async generateNextCreditNoteNumber(): Promise<string> {
     const db = getDB();
     const prefix = 'AV';

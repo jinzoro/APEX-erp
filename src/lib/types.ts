@@ -11,7 +11,8 @@ export enum AppView {
   AUDIT_LOG = 'AUDIT_LOG',
   CREDIT_NOTES = 'CREDIT_NOTES',
   ACCOUNTING = 'ACCOUNTING',
-  PAYROLL = 'PAYROLL'
+  PAYROLL = 'PAYROLL',
+  DELIVERY_NOTES = 'DELIVERY_NOTES'
 }
 
 export type TimeRange = '1D' | '7D' | '1M' | '1Y' | 'ALL';
@@ -230,4 +231,30 @@ export interface JournalEntry {
   lines: JournalLine[];
   sourceType?: string;
   sourceId?: string;
+}
+
+export interface StockMovement {
+  id: string;
+  date: string;
+  productId: string;
+  productName: string;
+  warehouse: string;
+  type: 'IN' | 'OUT' | 'ADJUSTMENT' | 'TRANSFER';
+  quantity: number;
+  unitCost: number;
+  reference: string;
+  note?: string;
+}
+
+export interface DeliveryNote {
+  id: string;
+  number: string;
+  date: string;
+  saleId?: string;
+  saleNumber?: string;
+  customerName: string;
+  buyerIce?: string;
+  items: { productId: string; name: string; quantity: number; delivered: number }[];
+  status: 'DRAFT' | 'VALIDATED';
+  validatedAt?: string;
 }
