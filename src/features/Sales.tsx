@@ -97,10 +97,14 @@ const Sales: React.FC = () => {
       subtotalHt: totalHt,
       totalVat: totalVat,
       amount: totalTtc,
-      currency: 'MAD',
       items: [...selectedItems],
       type: orderType,
-      status: 'PAID',
+      status: 'VALIDATED',
+      validatedAt: new Date().toISOString(),
+      paymentTerms: '30 jours',
+      dueDate: new Date(Date.now() + 30*24*3600*1000).toISOString().split('T')[0],
+      paymentMethod: 'Virement',
+      currency: 'MAD',
       buyerIce: (customer as any)?.ice,
       buyerAddress: (customer as any)?.address,
     } as Sale;
@@ -451,7 +455,9 @@ const Sales: React.FC = () => {
                 </div>
                 <div class="meta-details">
                   <p>Issue Date: <span style="color:#64748b">${new Date(sale.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span></p>
-                  <p>Account Type: <span style="color:#64748b">Verified Business Account</span></p>
+                  ${sale.dueDate ? `<p>Due Date: <span style="color:#64748b">${new Date(sale.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span></p>` : ''}
+                  ${sale.paymentTerms ? `<p>Payment terms: <span style="color:#64748b">${sale.paymentTerms}</span></p>` : ''}
+                  ${sale.paymentMethod ? `<p>Payment method: <span style="color:#64748b">${sale.paymentMethod}</span></p>` : ''}
                 </div>
               </div>
             </div>
@@ -501,6 +507,7 @@ const Sales: React.FC = () => {
             </div>
 
             <p class="thanks-note">${l.thanks}</p>
+            <p style="padding:0 60px 20px; font-size:10px; color:#94a3b8; text-align:center;">En cas de retard de paiement, une pénalité de retard pourra être appliquée conformément à la loi 69-21 (TO VERIFY).</p>
 
             <div class="footer-geometric">
               <div class="footer-accent-bar"></div>

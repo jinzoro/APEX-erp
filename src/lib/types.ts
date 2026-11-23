@@ -118,6 +118,12 @@ export interface Sale {
   type?: 'SALE' | 'PURCHASE';
   validatedAt?: string;
   creditNoteId?: string;
+  paymentTerms?: string;
+  dueDate?: string;
+  paymentMethod?: string;
+  originalCurrency?: string;
+  exchangeRate?: number;
+  rateDate?: string;
 }
 
 export interface CreditNote {
