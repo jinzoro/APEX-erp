@@ -18,6 +18,7 @@ import Finance from '@/features/Finance';
 import Settings from '@/features/Settings';
 import AuditLogView from '@/features/AuditLogView';
 import CreditNotes from '@/features/CreditNotes';
+import Accounting from '@/features/Accounting';
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>(AppView.DASHBOARD);
@@ -68,6 +69,7 @@ const App: React.FC = () => {
       case AppView.FINANCE: return <Finance />;
       case AppView.AUDIT_LOG: return <AuditLogView />;
       case AppView.CREDIT_NOTES: return <CreditNotes />;
+      case AppView.ACCOUNTING: return <Accounting />;
       case AppView.SETTINGS: 
         return <Settings 
           lang={lang} 

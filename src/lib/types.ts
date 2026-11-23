@@ -9,7 +9,8 @@ export enum AppView {
   FINANCE = 'FINANCE',
   SETTINGS = 'SETTINGS',
   AUDIT_LOG = 'AUDIT_LOG',
-  CREDIT_NOTES = 'CREDIT_NOTES'
+  CREDIT_NOTES = 'CREDIT_NOTES',
+  ACCOUNTING = 'ACCOUNTING'
 }
 
 export type TimeRange = '1D' | '7D' | '1M' | '1Y' | 'ALL';
@@ -183,4 +184,33 @@ export interface DashboardStats {
   recentActivities: Transaction[];
   salesHistory: SalesHistoryPoint[];
   madRates: { code: string; rate: number }[];
+}
+
+export interface Account {
+  id: string;
+  code: string;
+  name: string;
+  type: 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE';
+  parentId?: string;
+}
+
+export interface JournalLine {
+  id: string;
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  debit: number;
+  credit: number;
+  description?: string;
+}
+
+export interface JournalEntry {
+  id: string;
+  number: string;
+  date: string;
+  journal: 'SALES' | 'PURCHASES' | 'BANK' | 'CASH' | 'MISC';
+  description: string;
+  lines: JournalLine[];
+  sourceType?: string;
+  sourceId?: string;
 }

@@ -17,6 +17,7 @@ const VIEW_COLORS: Record<AppView, string> = {
   [AppView.SETTINGS]: 'bg-slate-600',
   [AppView.AUDIT_LOG]: 'bg-zinc-600',
   [AppView.CREDIT_NOTES]: 'bg-teal-600',
+  [AppView.ACCOUNTING]: 'bg-orange-600',
 };
 
 interface SidebarProps {

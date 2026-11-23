@@ -12,6 +12,8 @@ interface DBState {
   transactions: Transaction[];
   sales: Sale[];
   creditNotes: any[];
+  accounts: any[];
+  journalEntries: any[];
   auditLogs: AuditLog[];
   orderCounter: number;
   orderCountersByYear?: Record<string, number>;
@@ -26,6 +28,8 @@ const emptyState: DBState = {
   transactions: [],
   sales: [],
   creditNotes: [],
+  accounts: [],
+  journalEntries: [],
   auditLogs: [],
   orderCounter: 0
 };
@@ -38,6 +42,8 @@ const getDB = (): DBState => {
   if (!parsed.auditLogs) parsed.auditLogs = [];
   if (!parsed.orderCountersByYear) parsed.orderCountersByYear = {};
   if (!parsed.creditNotes) parsed.creditNotes = [];
+  if (!parsed.accounts) parsed.accounts = [];
+  if (!parsed.journalEntries) parsed.journalEntries = [];
   return parsed;
 };
 
@@ -178,6 +184,30 @@ export const backendService = {
         description: `${isSale ? 'SALE' : 'PURCHASE'} - ${order.orderNumber}`
       };
       db.transactions.push(tx);
+
+      // Auto-post double-entry in SALES journal (CGNC)
+      try {
+        const findAcc = (code: string) => (db.accounts || []).find((a: any) => a.code === code);
+        const clients = findAcc('3421');
+        const ventes = findAcc('7111');
+        const tvaColl = findAcc('4455');
+        const lines: any[] = [];
+        if (clients) lines.push({ id: Math.random().toString(36).substr(2,9), accountId: clients.id, accountCode: clients.code, accountName: clients.name, debit: order.amount, credit: 0, description: order.orderNumber });
+        if (ventes) lines.push({ id: Math.random().toString(36).substr(2,9), accountId: ventes.id, accountCode: ventes.code, accountName: ventes.name, debit: 0, credit: order.subtotalHt ?? (order.amount / 1.2), description: order.orderNumber });
+        if (tvaColl) lines.push({ id: Math.random().toString(36).substr(2,9), accountId: tvaColl.id, accountCode: tvaColl.code, accountName: tvaColl.name, debit: 0, credit: order.totalVat ?? (order.amount - (order.subtotalHt ?? order.amount)), description: order.orderNumber });
+        if (lines.length > 0) {
+          db.journalEntries.push({
+            id: Math.random().toString(36).substr(2,9),
+            number: `VT-${db.journalEntries.length + 1}`,
+            date: order.date || new Date().toISOString(),
+            journal: 'SALES',
+            description: `${isSale ? 'Vente' : 'Achat'} ${order.orderNumber}`,
+            lines,
+            sourceType: 'invoice',
+            sourceId: newItem.id,
+          });
+        }
+      } catch (e) { console.warn('journal post failed', e); }
     }
 
     (db[collection] as any[]).push(newItem);
