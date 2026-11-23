@@ -3,6 +3,7 @@ import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { Sale, Customer, Supplier, Product, CompanyInfo, SaleItem, Language } from '@/lib/types';
 import { backendService } from '@/services/backendSimulator';
 import { currencyService } from '@/services/currencyService';
+import { toMinor, amountInWordsFr } from '@/lib/money';
 import { Icons } from '@/lib/constants';
 import { AppContext } from '@/lib/context';
 
@@ -82,6 +83,7 @@ const Sales: React.FC = () => {
     if (!newSale.customerName || selectedItems.length === 0) return;
     
     const orderNumber = await backendService.generateNextOrderNumber();
+    const customer = customers.find(c => c.name === newSale.customerName);
     const saleData = {
       ...newSale,
       orderNumber,
@@ -89,7 +91,9 @@ const Sales: React.FC = () => {
       tva: tvaRate,
       items: [...selectedItems],
       type: orderType,
-      status: 'PAID'
+      status: 'PAID',
+      buyerIce: (customer as any)?.ice,
+      buyerAddress: (customer as any)?.address,
     } as Sale;
 
     await backendService.addItem('sales', saleData);
@@ -417,8 +421,19 @@ const Sales: React.FC = () => {
               <div class="bill-to">
                 <h4>${l.to}</h4>
                 <p style="font-size: 18px; font-weight: 900; color: #1e1e1e; margin-bottom: 8px;">${sale.customerName}</p>
-                <p>Client ID: #${sale.customerId?.substring(0,8).toUpperCase() || 'EXTERNAL-NODE'}</p>
-                <p>${company?.address || 'Corporate Registry Base'}</p>
+                ${sale.buyerIce ? `<p>ICE: ${sale.buyerIce}</p>` : ''}
+                ${sale.buyerAddress ? `<p>${sale.buyerAddress}</p>` : ''}
+              </div>
+              <div class="seller-block" style="font-size:12px; color:#64748b; max-width:260px;">
+                <p style="font-weight:900; color:#1e1e1e; margin-bottom:4px;">${company?.name || ''}</p>
+                ${company?.legalForm ? `<p>Forme: ${company.legalForm}${company.shareCapital ? ' - Capital: ' + company.shareCapital + ' MAD' : ''}</p>` : ''}
+                ${company?.address ? `<p>${company.address}</p>` : ''}
+                ${company?.ice ? `<p>ICE: ${company.ice}</p>` : ''}
+                ${company?.if ? `<p>IF: ${company.if}</p>` : ''}
+                ${company?.rc ? `<p>RC: ${company.rc}${company.rcCourt ? ' - ' + company.rcCourt : ''}</p>` : ''}
+                ${company?.patente ? `<p>TP: ${company.patente}</p>` : ''}
+                ${company?.cnssNumber ? `<p>CNSS: ${company.cnssNumber}</p>` : ''}
+                ${company?.bankRib ? `<p>RIB: ${company.bankRib}</p>` : ''}
               </div>
               <div class="invoice-meta">
                 <div class="meta-box">
@@ -472,6 +487,7 @@ const Sales: React.FC = () => {
                   <span>${l.gtotal}</span>
                   <span>${currencyService.format(sale.amount, 'MAD')}</span>
                 </div>
+                <p style="margin-top:12px; font-size:11px; color:#64748b; font-style:italic;">${amountInWordsFr(toMinor(String(sale.amount)), 'MAD')}</p>
               </div>
             </div>
 

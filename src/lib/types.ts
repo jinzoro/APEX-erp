@@ -19,12 +19,19 @@ export type CurrencyCode = string;
 
 export interface CompanyInfo {
   name: string;
+  legalForm?: string;
+  shareCapital?: number;
   logo?: string; // Base64
   address: string;
   phone: string;
   email: string;
   ice: string; // Moroccan Identifiant Commun de l'Entreprise
   if: string;  // Identifiant Fiscal
+  rc?: string;
+  rcCourt?: string;
+  patente?: string; // TP
+  cnssNumber?: string;
+  bankRib?: string;
   taxId: string;
   primaryColor?: string; // Hex code for theme
 }
@@ -75,6 +82,7 @@ export interface Customer {
   email: string;
   phone: string;
   address?: string;
+  ice?: string;
   totalSales: number;
   lastOrderDate: string;
   tier: 'LEAD' | 'RECURRING' | 'VIP';
@@ -93,6 +101,8 @@ export interface Sale {
   orderNumber: string;
   customerName: string;
   customerId?: string;
+  buyerIce?: string;
+  buyerAddress?: string;
   date: string; // ISO string
   amount: number; // This acts as Total TTC
   tva: number; // Percentage (e.g., 20)

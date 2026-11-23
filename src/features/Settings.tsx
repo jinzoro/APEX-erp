@@ -3,6 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { backendService } from '@/services/backendSimulator';
 import { Language, CurrencyCode, CompanyInfo, AppView } from '@/lib/types';
 import { Icons } from '@/lib/constants';
+import { isValidICE, isValidIF, isValidRIB } from '@/lib/validators';
 import { AppContext } from '@/lib/context';
 
 interface SettingsProps {
@@ -50,6 +51,9 @@ const Settings: React.FC<SettingsProps> = (props) => {
   };
 
   const handleSave = async () => {
+    if (currentCompany.ice && !isValidICE(currentCompany.ice)) { alert('ICE must be 15 digits'); return; }
+    if (currentCompany.if && !isValidIF(currentCompany.if)) { alert('IF invalid'); return; }
+    if (currentCompany.bankRib && !isValidRIB(currentCompany.bankRib)) { alert('RIB must be 24 digits'); return; }
     await backendService.saveCompanyInfo(currentCompany);
     alert("System kernel synchronized with new corporate identity.");
     window.location.reload(); // Refresh to propagate theme
@@ -110,6 +114,34 @@ const Settings: React.FC<SettingsProps> = (props) => {
                      <div className="space-y-2">
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">IF (Fiscal ID)</label>
                         <input type="text" value={currentCompany.if} onChange={e => setCurrentCompany({...currentCompany, if: e.target.value})} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl font-bold" />
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Forme juridique</label>
+                        <input type="text" value={currentCompany.legalForm || ''} onChange={e => setCurrentCompany({...currentCompany, legalForm: e.target.value})} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl font-bold" placeholder="SARL / SA / ..." />
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Capital social (MAD)</label>
+                        <input type="number" value={currentCompany.shareCapital || ''} onChange={e => setCurrentCompany({...currentCompany, shareCapital: Number(e.target.value)})} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl font-bold" />
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">RC (Registre de commerce)</label>
+                        <input type="text" value={currentCompany.rc || ''} onChange={e => setCurrentCompany({...currentCompany, rc: e.target.value})} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl font-bold" />
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Tribunal du RC</label>
+                        <input type="text" value={currentCompany.rcCourt || ''} onChange={e => setCurrentCompany({...currentCompany, rcCourt: e.target.value})} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl font-bold" />
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Patente / TP</label>
+                        <input type="text" value={currentCompany.patente || ''} onChange={e => setCurrentCompany({...currentCompany, patente: e.target.value})} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl font-bold" />
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">N° CNSS</label>
+                        <input type="text" value={currentCompany.cnssNumber || ''} onChange={e => setCurrentCompany({...currentCompany, cnssNumber: e.target.value})} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl font-bold" />
+                     </div>
+                     <div className="md:col-span-2 space-y-2">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">RIB (24 chiffres)</label>
+                        <input type="text" value={currentCompany.bankRib || ''} onChange={e => setCurrentCompany({...currentCompany, bankRib: e.target.value})} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl font-bold" placeholder="000000000000000000000000" />
                      </div>
                      <div className="md:col-span-2 space-y-2">
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Operating Headquarters</label>

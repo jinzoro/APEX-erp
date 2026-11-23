@@ -3,11 +3,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppView, Language, CurrencyCode } from '@/lib/types';
 import { currencyService } from '@/services/currencyService';
+import { seedDemoData } from '@/services/seedData';
 import { translations } from '@/i18n/translations';
 import { AppContext } from '@/lib/context';
 
 import Sidebar from '@/components/Sidebar';
-import LicenseActivation from '@/components/LicenseActivation';
 import Dashboard from '@/features/Dashboard';
 import Inventory from '@/features/Inventory';
 import Suppliers from '@/features/Suppliers';
@@ -21,7 +21,6 @@ import AuditLogView from '@/features/AuditLogView';
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>(AppView.DASHBOARD);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthorized, setIsAuthorized] = useState(localStorage.getItem('APEX_LIC_ACTIVE') === 'true');
   const [lang, setLang] = useState<Language>((localStorage.getItem('APEX_LANG') as Language) || 'EN');
   const [currency, setCurrency] = useState<CurrencyCode>((localStorage.getItem('APEX_CURR') as CurrencyCode) || 'MAD');
   const [rates, setRates] = useState<Record<string, number>>({ MAD: 10.05, USD: 1 });
@@ -32,6 +31,7 @@ const App: React.FC = () => {
     const init = async () => {
       const liveRates = await currencyService.getRates();
       setRates(liveRates);
+      try { await seedDemoData(); } catch (e) { console.warn('seed failed', e); }
       setTimeout(() => setIsLoading(false), 800);
     };
     init();
@@ -55,10 +55,6 @@ const App: React.FC = () => {
         <p className="mt-8 text-slate-900 font-black tracking-[0.4em] text-[11px] uppercase">Apex Kernel Loading</p>
       </div>
     );
-  }
-
-  if (!isAuthorized) {
-    return <LicenseActivation onActivated={() => setIsAuthorized(true)} />;
   }
 
   const renderView = () => {
