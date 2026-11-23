@@ -4,6 +4,7 @@ import { Sale, Customer, Supplier, Product, CompanyInfo, SaleItem, Language } fr
 import { backendService } from '@/services/backendSimulator';
 import { currencyService } from '@/services/currencyService';
 import { toMinor, amountInWordsFr } from '@/lib/money';
+import { invoiceToUbl } from '@/lib/ubl';
 import { Icons } from '@/lib/constants';
 import { AppContext } from '@/lib/context';
 
@@ -132,6 +133,17 @@ const Sales: React.FC = () => {
   const triggerPrint = (sale: Sale) => {
     setSelectedSaleForPrint(sale);
     setShowLangModal(true);
+  };
+
+  const downloadUbl = (sale: Sale) => {
+    const xml = invoiceToUbl(sale, company);
+    const blob = new Blob([xml], { type: 'application/xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${sale.orderNumber}.xml`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const generateInvoiceHtml = (lang: Language) => {
@@ -595,6 +607,7 @@ const Sales: React.FC = () => {
                   <td className="px-8 py-6 font-black text-slate-900">{currencyService.format(sale.amount, baseCurrency)}</td>
                   <td className="px-8 py-6 text-right">
                     <button onClick={() => triggerPrint(sale)} className="p-3 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all shadow-sm active:scale-90" style={{ color: company?.primaryColor }}><Icons.Download /></button>
+                    <button onClick={() => downloadUbl(sale)} className="p-3 bg-slate-50 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all shadow-sm active:scale-90 ml-2" title="Export UBL 2.1">UBL</button>
                   </td>
                 </tr>
               ))}
