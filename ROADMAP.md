@@ -2,14 +2,14 @@
 
 ## Phase status
 - [x] Phase 0 — Cleanup (delete keygen.html, stray files, published keys; folder structure; ESLint/Prettier/Vitest/CI; .env.example; money helper + tests; validators)
-- [~] Phase 1 — Database + multi-tenancy (skeleton only: tenants/profiles migration, RLS TODO)
+- [~] Phase 1 — Database + multi-tenancy (skeleton; local-first mode active)
 - [ ] Phase 2 — Auth + user management
 - [ ] Phase 3 — Licence system (signed tokens, activation, heartbeat, gating)
-- [ ] Phase 4 — Invoicing compliance (Morocco)
-- [ ] Phase 5 — Trading (négoce) workflow
-- [ ] Phase 6 — Accounting (CGNC)
-- [ ] Phase 7 — Payroll (HR)
-- [ ] Phase 8 — Data protection + security
+- [x] Phase 4 — Invoicing compliance (Morocco) (per-line VAT, numbering, credit notes, payment terms, UBL)
+- [~] Phase 5 — Trading (négoce) workflow (delivery notes, stock movements)
+- [x] Phase 6 — Accounting (CGNC) (chart, journals, auto-post, ledger, trial balance)
+- [x] Phase 7 — Payroll (HR) (employee file, rates, payslip)
+- [~] Phase 8 — Data protection + security (export, headers, dev-only purge)
 - [ ] Phase 9 — E-invoicing readiness
 - [ ] Phase 10 — i18n + UX
 - [ ] Phase 11 — Testing + deploy
