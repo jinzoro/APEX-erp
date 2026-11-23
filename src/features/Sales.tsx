@@ -22,6 +22,9 @@ const Sales: React.FC = () => {
   const [selectedSaleForPrint, setSelectedSaleForPrint] = useState<Sale | null>(null);
   const [orderType, setOrderType] = useState<'SALE' | 'PURCHASE'>('SALE');
   const [selectedItems, setSelectedItems] = useState<SaleItem[]>([]);
+  const [origCurrency, setOrigCurrency] = useState<string>('MAD');
+  const [exchangeRate, setExchangeRate] = useState<string>('1');
+  const [rateDate, setRateDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [previewHtml, setPreviewHtml] = useState<string>('');
   
   const [newSale, setNewSale] = useState<Partial<Sale>>({
@@ -105,6 +108,9 @@ const Sales: React.FC = () => {
       dueDate: new Date(Date.now() + 30*24*3600*1000).toISOString().split('T')[0],
       paymentMethod: 'Virement',
       currency: 'MAD',
+      originalCurrency: origCurrency !== 'MAD' ? origCurrency : undefined,
+      exchangeRate: origCurrency !== 'MAD' ? Number(exchangeRate) : undefined,
+      rateDate: origCurrency !== 'MAD' ? rateDate : undefined,
       buyerIce: (customer as any)?.ice,
       buyerAddress: (customer as any)?.address,
     } as Sale;
@@ -112,6 +118,9 @@ const Sales: React.FC = () => {
     await backendService.addItem('sales', saleData);
     setShowAddModal(false);
     setSelectedItems([]);
+    setOrigCurrency('MAD');
+    setExchangeRate('1');
+    setRateDate(new Date().toISOString().split('T')[0]);
     setNewSale({
       customerName: '',
       status: 'PAID',
@@ -458,6 +467,7 @@ const Sales: React.FC = () => {
                   ${sale.dueDate ? `<p>Due Date: <span style="color:#64748b">${new Date(sale.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span></p>` : ''}
                   ${sale.paymentTerms ? `<p>Payment terms: <span style="color:#64748b">${sale.paymentTerms}</span></p>` : ''}
                   ${sale.paymentMethod ? `<p>Payment method: <span style="color:#64748b">${sale.paymentMethod}</span></p>` : ''}
+                  ${sale.originalCurrency ? `<p>Original currency: <span style="color:#64748b">${sale.originalCurrency} (rate ${sale.exchangeRate} on ${sale.rateDate})</span></p>` : ''}
                 </div>
               </div>
             </div>
@@ -616,6 +626,16 @@ const Sales: React.FC = () => {
                     <div className="flex flex-col gap-2">
                        <span className="text-[9px] font-black text-slate-500 uppercase">{t.tax_config}</span>
                        <p className="text-[10px] text-slate-400">TVA par ligne (voir tax_rates)</p>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                       <span className="text-[9px] font-black text-slate-500 uppercase">Devise d'origine</span>
+                       <input type="text" value={origCurrency} onChange={e => setOrigCurrency(e.target.value.toUpperCase())} className="w-full p-3 bg-slate-800 border border-slate-700 text-white rounded-xl font-bold text-xs" />
+                       {origCurrency !== 'MAD' && (
+                         <>
+                           <input type="number" step="0.0001" value={exchangeRate} onChange={e => setExchangeRate(e.target.value)} placeholder="Taux" className="w-full p-3 bg-slate-800 border border-slate-700 text-white rounded-xl font-bold text-xs" />
+                           <input type="date" value={rateDate} onChange={e => setRateDate(e.target.value)} className="w-full p-3 bg-slate-800 border border-slate-700 text-white rounded-xl font-bold text-xs" />
+                         </>
+                       )}
                     </div>
                  </div>
                  <div className="mt-auto p-8 bg-slate-800/50 rounded-3xl border border-slate-800">
