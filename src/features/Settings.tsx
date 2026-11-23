@@ -66,6 +66,17 @@ const Settings: React.FC<SettingsProps> = (props) => {
     }
   };
 
+  const handleExport = async () => {
+    const json = await backendService.exportAll();
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'apex-export.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const filteredCurrencies = Object.keys(rates).filter(c => 
     c.toLowerCase().includes(currencySearch.toLowerCase())
   ).sort();
@@ -235,6 +246,9 @@ const Settings: React.FC<SettingsProps> = (props) => {
               </div>
             </div>
 
+            <button onClick={handleExport} className="w-full py-4 bg-emerald-50 text-emerald-700 rounded-[2.5rem] font-black uppercase tracking-[0.4em] border-2 border-dashed border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all shadow-sm active:scale-95 mb-4">
+              Export Data (JSON)
+            </button>
             <button onClick={handleReset} className="w-full py-8 bg-rose-50 text-rose-600 rounded-[2.5rem] font-black uppercase tracking-[0.4em] border-2 border-dashed border-rose-200 hover:bg-rose-600 hover:text-white transition-all shadow-sm active:scale-95">
               Purge System Node
             </button>

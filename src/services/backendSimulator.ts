@@ -91,7 +91,14 @@ export const backendService = {
   },
 
   async factoryReset() {
+    if (!confirm('DEV ONLY: wipe all local data?')) return;
     localStorage.clear();
+  },
+
+  async exportAll(): Promise<string> {
+    const db = getDB();
+    const company = await this.getCompanyInfo();
+    return JSON.stringify({ company, db }, null, 2);
   },
 
   logAction(action: string, details: string) {
