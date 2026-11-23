@@ -68,4 +68,17 @@ export async function seedDemoData(): Promise<void> {
     ];
     for (const a of accs) await backendService.addItem('accounts', a);
   }
+
+  const rates = await backendService.getCollection('payrollRates' as any);
+  if (!rates || (rates as any[]).length === 0) {
+    const pr = [
+      { key: 'CNSS_EMPLOYEE', value: 4.48, effectiveFrom: '2024-01-01', source: 'CNSS (TO VERIFY)', toVerify: true },
+      { key: 'CNSS_EMPLOYER', value: 8.98, effectiveFrom: '2024-01-01', source: 'CNSS (TO VERIFY)', toVerify: true },
+      { key: 'AMO_EMPLOYEE', value: 2.26, effectiveFrom: '2024-01-01', source: 'AMO (TO VERIFY)', toVerify: true },
+      { key: 'AMO_EMPLOYER', value: 4.11, effectiveFrom: '2024-01-01', source: 'AMO (TO VERIFY)', toVerify: true },
+      { key: 'IR_PROFESSIONAL_EXPENSE_DEDUCTION', value: 20, effectiveFrom: '2024-01-01', source: 'DGI (TO VERIFY)', toVerify: true },
+      { key: 'FAMILY_DEDUCTION_PER_DEPENDENT', value: 500, effectiveFrom: '2024-01-01', source: 'DGI (TO VERIFY)', toVerify: true },
+    ];
+    for (const r of pr) await backendService.addItem('payrollRates', r);
+  }
 }

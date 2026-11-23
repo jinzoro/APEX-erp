@@ -14,6 +14,7 @@ interface DBState {
   creditNotes: any[];
   accounts: any[];
   journalEntries: any[];
+  payrollRates: any[];
   auditLogs: AuditLog[];
   orderCounter: number;
   orderCountersByYear?: Record<string, number>;
@@ -30,6 +31,7 @@ const emptyState: DBState = {
   creditNotes: [],
   accounts: [],
   journalEntries: [],
+  payrollRates: [],
   auditLogs: [],
   orderCounter: 0
 };
@@ -44,6 +46,7 @@ const getDB = (): DBState => {
   if (!parsed.creditNotes) parsed.creditNotes = [];
   if (!parsed.accounts) parsed.accounts = [];
   if (!parsed.journalEntries) parsed.journalEntries = [];
+  if (!parsed.payrollRates) parsed.payrollRates = [];
   return parsed;
 };
 

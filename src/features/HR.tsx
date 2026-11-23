@@ -11,7 +11,7 @@ const HR: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newEmp, setNewEmp] = useState<Partial<Employee>>({
-    firstName: '', lastName: '', cin: '', role: '', department: 'General Operations', salary: 0, status: 'ACTIVE', email: '', phone: '', address: '', joinDate: new Date().toISOString().split('T')[0]
+    firstName: '', lastName: '', cin: '', role: '', department: 'General Operations', grossSalary: 0, salary: 0, status: 'ACTIVE', email: '', phone: '', address: '', joinDate: new Date().toISOString().split('T')[0]
   });
 
   const fetch = async () => {
@@ -65,7 +65,7 @@ const HR: React.FC = () => {
                   </div>
                 </td>
                 <td className="px-10 py-7 font-black text-slate-900 text-lg tracking-tighter">
-                  {currencyService.format(emp.salary, currency)}
+                  {currencyService.format(emp.grossSalary || emp.salary || 0, currency)}
                 </td>
                 <td className="px-10 py-7 text-right">
                   <button className="px-5 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase">Attestation</button>
@@ -85,7 +85,7 @@ const HR: React.FC = () => {
              <div className="p-12 space-y-6">
                 <input type="text" placeholder="Prénom" value={newEmp.firstName} onChange={e => setNewEmp({...newEmp, firstName: e.target.value})} className="w-full p-5 bg-slate-50 border rounded-2xl font-bold" />
                 <input type="text" placeholder="Nom" value={newEmp.lastName} onChange={e => setNewEmp({...newEmp, lastName: e.target.value})} className="w-full p-5 bg-slate-50 border rounded-2xl font-bold" />
-                <input type="number" placeholder="Salary Net" value={newEmp.salary} onChange={e => setNewEmp({...newEmp, salary: Number(e.target.value)})} className="w-full p-5 bg-slate-50 border rounded-2xl font-bold" />
+                <input type="number" placeholder="Salaire brut" value={newEmp.grossSalary} onChange={e => setNewEmp({...newEmp, grossSalary: Number(e.target.value), salary: Number(e.target.value)})} className="w-full p-5 bg-slate-50 border rounded-2xl font-bold" />
                 <div className="flex gap-6 pt-6">
                     <button onClick={() => setShowAddModal(false)} className="flex-1 py-5 font-black text-slate-400 uppercase tracking-widest text-xs">Abort</button>
                     <button onClick={handleOnboard} className="flex-1 py-5 bg-slate-900 text-white rounded-[2rem] font-black uppercase shadow-2xl text-xs tracking-widest">Commit to Hub</button>

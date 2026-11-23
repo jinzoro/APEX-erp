@@ -10,7 +10,8 @@ export enum AppView {
   SETTINGS = 'SETTINGS',
   AUDIT_LOG = 'AUDIT_LOG',
   CREDIT_NOTES = 'CREDIT_NOTES',
-  ACCOUNTING = 'ACCOUNTING'
+  ACCOUNTING = 'ACCOUNTING',
+  PAYROLL = 'PAYROLL'
 }
 
 export type TimeRange = '1D' | '7D' | '1M' | '1Y' | 'ALL';
@@ -68,14 +69,30 @@ export interface Employee {
   firstName: string;
   lastName: string;
   cin: string; // Moroccan National ID
+  cnssNumber?: string;
   role: string;
   department: string;
-  salary: number;
+  contractType?: 'CDI' | 'CDD' | 'STAGE' | 'INTERIM';
+  familyStatus?: 'CELIBATAIRE' | 'MARIE' | 'DIVORCE' | 'VEUF';
+  dependents?: number;
+  grossSalary: number;
+  salary: number; // legacy net
   email: string;
   phone: string;
   address: string;
   joinDate: string;
+  hireDate?: string;
+  bankRib?: string;
   status: 'ACTIVE' | 'ON_LEAVE' | 'TERMINATED';
+}
+
+export interface PayrollRate {
+  id: string;
+  key: string;
+  value: number;
+  effectiveFrom: string;
+  source: string;
+  toVerify: boolean;
 }
 
 export interface Customer {
