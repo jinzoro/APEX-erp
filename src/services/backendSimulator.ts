@@ -1,5 +1,5 @@
 
-import { Product, Customer, DashboardStats, Employee, Transaction, Sale, Supplier, CompanyInfo, AuditLog, TimeRange, SalesHistoryPoint } from '../types';
+import { Product, Customer, DashboardStats, Employee, Transaction, Sale, Supplier, CompanyInfo, AuditLog, TimeRange, SalesHistoryPoint } from '@/lib/types';
 
 const DB_KEY = 'APEX_ERP_PRODUCTION_DB_V10';
 const COMPANY_KEY = 'APEX_COMPANY_PROFILE_V1';

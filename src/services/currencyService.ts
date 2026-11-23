@@ -1,5 +1,4 @@
 
-import { CurrencyCode } from '../types';
 
 const BASE_URL = 'https://open.er-api.com/v6/latest/USD';
 
@@ -13,7 +12,7 @@ export const currencyService = {
       const res = await fetch(BASE_URL);
       const data: RatesResponse = await res.json();
       return data.rates;
-    } catch (e) {
+    } catch {
       console.warn("Currency fetch failed, using fallback rates");
       // Fallback with MAD included
       return { USD: 1, EUR: 0.92, GBP: 0.78, MAD: 10.05, SAR: 3.75, JPY: 150.2 };

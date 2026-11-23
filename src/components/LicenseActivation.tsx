@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { backendService } from '../services/backendSimulator';
+import { backendService } from '@/services/backendSimulator';
 
 interface Props {
   onActivated: () => void;

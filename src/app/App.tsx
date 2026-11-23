@@ -1,23 +1,22 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AppView, Language, CurrencyCode } from './types';
-import { backendService } from './services/backendSimulator';
-import { currencyService } from './services/currencyService';
-import { translations } from './translations';
-import { AppContext } from './context';
+import { AppView, Language, CurrencyCode } from '@/lib/types';
+import { currencyService } from '@/services/currencyService';
+import { translations } from '@/i18n/translations';
+import { AppContext } from '@/lib/context';
 
-import Sidebar from './components/Sidebar';
-import LicenseActivation from './components/LicenseActivation';
-import Dashboard from './views/Dashboard';
-import Inventory from './views/Inventory';
-import Suppliers from './views/Suppliers';
-import HR from './views/HR';
-import Sales from './views/Sales';
-import Customers from './views/Customers';
-import Finance from './views/Finance';
-import Settings from './views/Settings';
-import AuditLogView from './views/AuditLogView';
+import Sidebar from '@/components/Sidebar';
+import LicenseActivation from '@/components/LicenseActivation';
+import Dashboard from '@/features/Dashboard';
+import Inventory from '@/features/Inventory';
+import Suppliers from '@/features/Suppliers';
+import HR from '@/features/HR';
+import Sales from '@/features/Sales';
+import Customers from '@/features/Customers';
+import Finance from '@/features/Finance';
+import Settings from '@/features/Settings';
+import AuditLogView from '@/features/AuditLogView';
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>(AppView.DASHBOARD);

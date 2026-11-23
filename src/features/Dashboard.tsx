@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { DashboardStats, AppView, TimeRange } from '../types';
-import { backendService } from '../services/backendSimulator';
-import { currencyService } from '../services/currencyService';
-import { Icons } from '../constants';
-import { AppContext } from '../context';
+import { DashboardStats, AppView, TimeRange } from '@/lib/types';
+import { backendService } from '@/services/backendSimulator';
+import { currencyService } from '@/services/currencyService';
+import { Icons } from '@/lib/constants';
+import { AppContext } from '@/lib/context';
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -15,6 +15,7 @@ interface Props {
 }
 
 const Dashboard: React.FC<Props> = ({ onViewChange }) => {
+  void onViewChange;
   const { t, currency } = useContext(AppContext);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);

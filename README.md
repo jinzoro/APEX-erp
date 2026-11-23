@@ -4,19 +4,12 @@ Apex ERP is a high-performance, commercial-grade ERP solution designed for deskt
 
 ## 🔑 License Activation
 
-The system requires a valid **Master License Key** to unlock the kernel. 
+Licences are issued by the vendor via signed (Ed25519) tokens. No master keys are
+published in this repository. See `LEGAL_TODO.md` and `ROADMAP.md`.
 
-### Development Keys
-For demo and development purposes, the current kernel accepts any key that follows the Apex Serial Protocol:
-- **Format:** `APEX-[ANYTHING]` (Minimum 11 characters)
-- **Universal Key:** `APEX-MASTER-2025-UNLOCKED`
-- **Alternative Key:** `APEX-ADMIN-DEPLOY-999`
-
-### Production Key Forge
-To generate machine-specific keys based on your **Workstation HWID**, open the `keygen.html` file in your browser.
-1. Copy the **HWID** from the Apex Activation Wizard.
-2. Paste it into the **License Forge**.
-3. Generate a signed serial (e.g., `APEX-UNL-01-XXXX-YYY`).
+- Activation happens through the `activate-licence` Edge Function.
+- The app ships the **public** key only; the private key lives in server secrets.
+- There is no `keygen.html` and no bypass via `localStorage`.
 
 ---
 
@@ -70,5 +63,5 @@ To generate machine-specific keys based on your **Workstation HWID**, open the `
 
 ---
 
-## ⚠️ Factory Reset
+## ⚠️ Factory Reset (dev only)
 To wipe the local node and clear all database records, navigate to **Settings** and select **Factory Reset Node**. This action is irreversible and restores the system to its OOBE (Out of Box Experience) state.

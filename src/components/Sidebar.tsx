@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { AppView, CompanyInfo } from '../types';
-import { Icons } from '../constants';
-import { backendService } from '../services/backendSimulator';
-import { AppContext } from '../context';
+import { AppView, CompanyInfo } from '@/lib/types';
+import { Icons } from '@/lib/constants';
+import { backendService } from '@/services/backendSimulator';
+import { AppContext } from '@/lib/context';
 
 const VIEW_COLORS: Record<AppView, string> = {
   [AppView.DASHBOARD]: 'bg-blue-600',

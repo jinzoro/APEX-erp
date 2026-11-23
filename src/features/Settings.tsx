@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect, useContext } from 'react';
-import { backendService } from '../services/backendSimulator';
-import { Language, CurrencyCode, CompanyInfo, AppView } from '../types';
-import { Icons } from '../constants';
-import { AppContext } from '../context';
+import { backendService } from '@/services/backendSimulator';
+import { Language, CurrencyCode, CompanyInfo, AppView } from '@/lib/types';
+import { Icons } from '@/lib/constants';
+import { AppContext } from '@/lib/context';
 
 interface SettingsProps {
   lang: Language;

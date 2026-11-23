@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect, useContext, useMemo } from 'react';
-import { Transaction, Customer, Supplier, Product } from '../types';
-import { backendService } from '../services/backendSimulator';
-import { currencyService } from '../services/currencyService';
-import { Icons } from '../constants';
-import { AppContext } from '../context';
+import { Transaction } from '@/lib/types';
+import { backendService } from '@/services/backendSimulator';
+import { currencyService } from '@/services/currencyService';
+import { Icons } from '@/lib/constants';
+import { AppContext } from '@/lib/context';
 
 const Finance: React.FC = () => {
-  const { t, currency: baseCurrency, rates } = useContext(AppContext);
+  const { currency: baseCurrency, rates } = useContext(AppContext);
   
   const [txs, setTxs] = useState<Transaction[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);

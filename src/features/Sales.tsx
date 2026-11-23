@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useContext, useMemo } from 'react';
-import { Sale, Customer, Supplier, Product, CompanyInfo, SaleItem, Language } from '../types';
-import { backendService } from '../services/backendSimulator';
-import { currencyService } from '../services/currencyService';
-import { Icons } from '../constants';
-import { AppContext } from '../context';
+import { Sale, Customer, Supplier, Product, CompanyInfo, SaleItem, Language } from '@/lib/types';
+import { backendService } from '@/services/backendSimulator';
+import { currencyService } from '@/services/currencyService';
+import { Icons } from '@/lib/constants';
+import { AppContext } from '@/lib/context';
 
 const Sales: React.FC = () => {
   const { currency: baseCurrency, t } = useContext(AppContext);

@@ -1,27 +1,22 @@
 
 import React, { useState, useEffect, useContext } from 'react';
-import { Employee, CompanyInfo } from '../types';
-import { backendService } from '../services/backendSimulator';
-import { currencyService } from '../services/currencyService';
-import { Icons } from '../constants';
-import { AppContext } from '../context';
+import { Employee } from '@/lib/types';
+import { backendService } from '@/services/backendSimulator';
+import { currencyService } from '@/services/currencyService';
+import { Icons } from '@/lib/constants';
+import { AppContext } from '@/lib/context';
 
 const HR: React.FC = () => {
-  const { t, currency } = useContext(AppContext);
+  const { currency } = useContext(AppContext);
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [company, setCompany] = useState<CompanyInfo | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newEmp, setNewEmp] = useState<Partial<Employee>>({
     firstName: '', lastName: '', cin: '', role: '', department: 'General Operations', salary: 0, status: 'ACTIVE', email: '', phone: '', address: '', joinDate: new Date().toISOString().split('T')[0]
   });
 
   const fetch = async () => {
-    const [emps, info] = await Promise.all([
-      backendService.getEmployees(),
-      backendService.getCompanyInfo()
-    ]);
+    const emps = await backendService.getEmployees();
     setEmployees(emps);
-    setCompany(info);
   };
 
   useEffect(() => {

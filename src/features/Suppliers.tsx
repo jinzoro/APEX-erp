@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useContext } from 'react';
-import { Supplier } from '../types';
-import { backendService } from '../services/backendSimulator';
-import { currencyService } from '../services/currencyService';
-import { Icons } from '../constants';
-import { AppContext } from '../context';
+import { Supplier } from '@/lib/types';
+import { backendService } from '@/services/backendSimulator';
+import { currencyService } from '@/services/currencyService';
+import { Icons } from '@/lib/constants';
+import { AppContext } from '@/lib/context';
 
 const Suppliers: React.FC = () => {
   const { t, currency } = useContext(AppContext);

@@ -1,6 +1,6 @@
 
 import { createContext } from 'react';
-import { Language, CurrencyCode } from './types';
+import { Language, CurrencyCode } from '@/lib/types';
 
 export interface AppContextType {
   lang: Language;

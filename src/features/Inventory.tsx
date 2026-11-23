@@ -1,15 +1,14 @@
 
 import React, { useState, useEffect, useContext, useMemo } from 'react';
-import { Product, ItemType } from '../types';
-import { backendService } from '../services/backendSimulator';
-import { Icons } from '../constants';
-import { AppContext } from '../context';
-import { currencyService } from '../services/currencyService';
+import { Product, ItemType } from '@/lib/types';
+import { backendService } from '@/services/backendSimulator';
+import { Icons } from '@/lib/constants';
+import { AppContext } from '@/lib/context';
+import { currencyService } from '@/services/currencyService';
 
 const Inventory: React.FC = () => {
   const { t, currency } = useContext(AppContext);
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ItemType | 'ALL'>('ALL');
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -21,7 +20,7 @@ const Inventory: React.FC = () => {
   const fetch = async () => {
     const data = await backendService.getProducts();
     setProducts(data);
-    setLoading(false);
+    
   };
 
   useEffect(() => {

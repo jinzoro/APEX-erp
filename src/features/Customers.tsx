@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useContext } from 'react';
-import { Customer } from '../types';
-import { backendService } from '../services/backendSimulator';
-import { Icons } from '../constants';
-import { currencyService } from '../services/currencyService';
-import { AppContext } from '../context';
+import { Customer } from '@/lib/types';
+import { backendService } from '@/services/backendSimulator';
+import { Icons } from '@/lib/constants';
+import { currencyService } from '@/services/currencyService';
+import { AppContext } from '@/lib/context';
 
 const Customers: React.FC = () => {
   const { t, currency } = useContext(AppContext);

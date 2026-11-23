@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useContext } from 'react';
-import { AuditLog } from '../types';
-import { backendService } from '../services/backendSimulator';
-import { AppContext } from '../context';
+import { AuditLog } from '@/lib/types';
+import { backendService } from '@/services/backendSimulator';
+import { AppContext } from '@/lib/context';
 
 const AuditLogView: React.FC = () => {
   const { t } = useContext(AppContext);
