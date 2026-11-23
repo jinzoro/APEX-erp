@@ -22,7 +22,6 @@ const Sales: React.FC = () => {
   const [selectedSaleForPrint, setSelectedSaleForPrint] = useState<Sale | null>(null);
   const [orderType, setOrderType] = useState<'SALE' | 'PURCHASE'>('SALE');
   const [selectedItems, setSelectedItems] = useState<SaleItem[]>([]);
-  const [tvaRate, setTvaRate] = useState<number>(20); 
   const [previewHtml, setPreviewHtml] = useState<string>('');
   
   const [newSale, setNewSale] = useState<Partial<Sale>>({
@@ -54,21 +53,28 @@ const Sales: React.FC = () => {
     const product = products.find(p => p.id === productId);
     if (!product) return;
 
+    const unitPrice = orderType === 'SALE' ? (product.price || 0) : (product.cost || 0);
+    const vatRate = 20;
+    const makeLine = (qty: number) => {
+      const lineHt = qty * unitPrice;
+      const lineVat = Math.round(lineHt * vatRate) / 100;
+      return { productId: product.id, name: product.name, quantity: qty, price: unitPrice, vatRate, lineHt, lineVat, lineTtc: lineHt + lineVat };
+    };
     const existing = selectedItems.find(i => i.productId === productId);
     if (existing) {
-      setSelectedItems(selectedItems.map(i => i.productId === productId ? { ...i, quantity: i.quantity + 1 } : i));
+      setSelectedItems(selectedItems.map(i => i.productId === productId ? { ...i, quantity: i.quantity + 1, lineHt: (i.quantity+1)*i.price, lineVat: Math.round((i.quantity+1)*i.price*i.vatRate)/100, lineTtc: (i.quantity+1)*i.price + Math.round((i.quantity+1)*i.price*i.vatRate)/100 } : i));
     } else {
-      setSelectedItems([...selectedItems, {
-        productId: product.id,
-        name: product.name,
-        quantity: 1,
-        price: orderType === 'SALE' ? (product.price || 0) : (product.cost || 0)
-      }]);
+      setSelectedItems([...selectedItems, makeLine(1)]);
     }
   };
 
   const updateItemQty = (productId: string, qty: number) => {
-    setSelectedItems(selectedItems.map(i => i.productId === productId ? { ...i, quantity: Math.max(1, qty) } : i));
+    const q = Math.max(1, qty);
+    setSelectedItems(selectedItems.map(i => i.productId === productId ? { ...i, quantity: q, lineHt: q * i.price, lineVat: Math.round(q * i.price * i.vatRate) / 100, lineTtc: q * i.price + Math.round(q * i.price * i.vatRate) / 100 } : i));
+  };
+
+  const updateItemVat = (productId: string, rate: number) => {
+    setSelectedItems(selectedItems.map(i => i.productId === productId ? { ...i, vatRate: rate, lineVat: Math.round(i.quantity * i.price * rate) / 100, lineTtc: i.quantity * i.price + Math.round(i.quantity * i.price * rate) / 100 } : i));
   };
 
   const handleRemoveItem = (productId: string) => {
@@ -76,8 +82,9 @@ const Sales: React.FC = () => {
   };
 
   // Logic: Price is already TTC. Subtotal HT and TVA are calculated from the total.
-  const totalTTC = useMemo(() => selectedItems.reduce((acc, item) => acc + (item.quantity * item.price), 0), [selectedItems]);
-  const subtotalHT = useMemo(() => totalTTC / (1 + (tvaRate / 100)), [totalTTC, tvaRate]);
+  const totalHt = useMemo(() => selectedItems.reduce((acc, item) => acc + item.lineHt, 0), [selectedItems]);
+  const totalVat = useMemo(() => selectedItems.reduce((acc, item) => acc + item.lineVat, 0), [selectedItems]);
+  const totalTtc = useMemo(() => selectedItems.reduce((acc, item) => acc + item.lineTtc, 0), [selectedItems]);
 
   const handleCreate = async () => {
     if (!newSale.customerName || selectedItems.length === 0) return;
@@ -87,8 +94,10 @@ const Sales: React.FC = () => {
     const saleData = {
       ...newSale,
       orderNumber,
-      amount: totalTTC, 
-      tva: tvaRate,
+      subtotalHt: totalHt,
+      totalVat: totalVat,
+      amount: totalTtc,
+      currency: 'MAD',
       items: [...selectedItems],
       type: orderType,
       status: 'PAID',
@@ -117,15 +126,15 @@ const Sales: React.FC = () => {
     if (!sale) return '';
     
     const labels = {
-      EN: { inv: 'INVOICE', desc: 'Item description', qty: 'Quantity', price: 'Unit Price', total: 'Total Price', subtotal: 'Sub Total', tax: `Vat & Tax (${sale.tva}%)`, gtotal: 'Grand Total', to: 'Invoice To:', thanks: 'Thanks for your business!' },
-      FR: { inv: 'FACTURE', desc: 'Désignation', qty: 'Quantité', price: 'Prix Unit.', total: 'Prix Total', subtotal: 'Sous Total', tax: `TVA (${sale.tva}%)`, gtotal: 'Total Général', to: 'Facturer à:', thanks: 'Merci de votre confiance !' },
-      AR: { inv: 'فاتورة', desc: 'الوصف', qty: 'الكمية', price: 'سعر الوحدة', total: 'السعر الإجمالي', subtotal: 'المجموع الفرعي', tax: `الضريبة (${sale.tva}%)`, gtotal: 'المجموع الكلي', to: 'إلى:', thanks: 'شكراً لتعاملكم معنا' }
+      EN: { inv: 'INVOICE', desc: 'Item description', qty: 'Quantity', price: 'Unit Price', total: 'Total Price', subtotal: 'Sub Total', tax: `TVA`, gtotal: 'Grand Total', to: 'Invoice To:', thanks: 'Thanks for your business!' },
+      FR: { inv: 'FACTURE', desc: 'Désignation', qty: 'Quantité', price: 'Prix Unit.', total: 'Prix Total', subtotal: 'Sous Total', tax: `TVA`, gtotal: 'Total Général', to: 'Facturer à:', thanks: 'Merci de votre confiance !' },
+      AR: { inv: 'فاتورة', desc: 'الوصف', qty: 'الكمية', price: 'سعر الوحدة', total: 'السعر الإجمالي', subtotal: 'المجموع الفرعي', tax: `الضريبة`, gtotal: 'المجموع الكلي', to: 'إلى:', thanks: 'شكراً لتعاملكم معنا' }
     };
 
     const l = labels[lang] || labels.EN;
     const isRtl = lang === 'AR';
-    const sHT = sale.amount / (1 + (sale.tva / 100));
-    const tvaA = sale.amount - sHT;
+    const sHT = sale.subtotalHt;
+    const tvaA = sale.totalVat;
     const themeColor = company?.primaryColor || '#e11d48';
 
     return `
@@ -565,7 +574,7 @@ const Sales: React.FC = () => {
                     <p className="text-sm font-bold text-slate-800">{sale.customerName}</p>
                     <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">{new Date(sale.date).toLocaleDateString()}</p>
                   </td>
-                  <td className="px-8 py-6"><span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg" style={{ color: company?.primaryColor, backgroundColor: (company?.primaryColor || '#2563eb') + '10' }}>TVA {sale.tva}%</span></td>
+                  <td className="px-8 py-6"><span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg" style={{ color: company?.primaryColor, backgroundColor: (company?.primaryColor || '#2563eb') + '10' }}>TVA</span></td>
                   <td className="px-8 py-6 font-black text-slate-900">{currencyService.format(sale.amount, baseCurrency)}</td>
                   <td className="px-8 py-6 text-right">
                     <button onClick={() => triggerPrint(sale)} className="p-3 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all shadow-sm active:scale-90" style={{ color: company?.primaryColor }}><Icons.Download /></button>
@@ -599,15 +608,12 @@ const Sales: React.FC = () => {
                     </div>
                     <div className="flex flex-col gap-2">
                        <span className="text-[9px] font-black text-slate-500 uppercase">{t.tax_config}</span>
-                       <div className="flex items-center gap-4">
-                          <input type="range" min="0" max="30" step="1" value={tvaRate} onChange={e => setTvaRate(Number(e.target.value))} className="flex-1 accent-blue-600" style={{ accentColor: company?.primaryColor }} />
-                          <span className="font-black text-xl" style={{ color: company?.primaryColor }}>{tvaRate}%</span>
-                       </div>
+                       <p className="text-[10px] text-slate-400">TVA par ligne (voir tax_rates)</p>
                     </div>
                  </div>
                  <div className="mt-auto p-8 bg-slate-800/50 rounded-3xl border border-slate-800">
                     <p className="text-[9px] font-black text-slate-500 uppercase mb-1">{t.final_settlement}</p>
-                    <p className="text-3xl font-black tracking-tighter" style={{ color: company?.primaryColor }}>{currencyService.format(totalTTC, 'MAD')}</p>
+                    <p className="text-3xl font-black tracking-tighter" style={{ color: company?.primaryColor }}>{currencyService.format(totalTtc, 'MAD')}</p>
                  </div>
               </div>
               <div className="flex-1 p-12 flex flex-col bg-slate-50/50">
@@ -616,7 +622,7 @@ const Sales: React.FC = () => {
                       <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.basket}</h4>
                       <div className="text-right">
                          <p className="text-[9px] font-black text-slate-400 uppercase">{t.subtotal_ht}</p>
-                         <p className="text-lg font-black text-slate-900">{currencyService.format(subtotalHT, 'MAD')}</p>
+                         <p className="text-lg font-black text-slate-900">{currencyService.format(totalHt, 'MAD')}</p>
                       </div>
                     </div>
                     <select className="w-full p-4 bg-white border border-slate-200 rounded-xl outline-none font-bold text-sm shadow-sm mb-8 focus:border-blue-600" onChange={(e) => handleAddItemToOrder(e.target.value)}>
@@ -629,6 +635,9 @@ const Sales: React.FC = () => {
                            <div className="flex-1"><p className="text-sm font-black text-slate-900 truncate">{item.name}</p></div>
                            <div className="flex items-center gap-5">
                               <input type="number" value={item.quantity} className="w-20 p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-center font-black text-sm" onChange={(e) => updateItemQty(item.productId, Number(e.target.value))}/>
+                              <select value={item.vatRate} onChange={(e) => updateItemVat(item.productId, Number(e.target.value))} className="w-20 p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-center font-black text-sm">
+                                {[0,7,10,14,20].map(r => <option key={r} value={r}>{r}%</option>)}
+                              </select>
                               <button onClick={() => handleRemoveItem(item.productId)} className="p-3 text-rose-500 hover:bg-rose-50 rounded-xl transition-all"><Icons.Alert /></button>
                            </div>
                         </div>

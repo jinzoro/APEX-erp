@@ -11,8 +11,11 @@ interface DBState {
   employees: Employee[];
   transactions: Transaction[];
   sales: Sale[];
+  creditNotes: any[];
   auditLogs: AuditLog[];
   orderCounter: number;
+  orderCountersByYear?: Record<string, number>;
+  creditNoteCounter?: number;
 }
 
 const emptyState: DBState = {
@@ -22,6 +25,7 @@ const emptyState: DBState = {
   employees: [],
   transactions: [],
   sales: [],
+  creditNotes: [],
   auditLogs: [],
   orderCounter: 0
 };
@@ -32,6 +36,8 @@ const getDB = (): DBState => {
   const parsed = JSON.parse(data);
   if (parsed.orderCounter === undefined) parsed.orderCounter = 0;
   if (!parsed.auditLogs) parsed.auditLogs = [];
+  if (!parsed.orderCountersByYear) parsed.orderCountersByYear = {};
+  if (!parsed.creditNotes) parsed.creditNotes = [];
   return parsed;
 };
 
@@ -119,11 +125,13 @@ export const backendService = {
     const db = getDB();
     const company = await this.getCompanyInfo();
     const prefix = (company.name || 'APX').substring(0, 3).toUpperCase();
-    const counterStr = String(db.orderCounter).padStart(10, '0');
-    const orderNumber = `${prefix}-${counterStr}`;
-    db.orderCounter++;
+    const year = new Date().getFullYear();
+    if (!db.orderCountersByYear) db.orderCountersByYear = {};
+    const key = String(year);
+    const current = (db.orderCountersByYear[key] || 0) + 1;
+    db.orderCountersByYear[key] = current;
     saveDB(db);
-    return orderNumber;
+    return `${prefix}-${year}-${String(current).padStart(6, '0')}`;
   },
 
   async getCollection<K extends keyof DBState>(key: K): Promise<DBState[K]> {
@@ -205,6 +213,15 @@ export const backendService = {
   async getCustomers() { return this.getCollection('customers'); },
   async getSuppliers() { return this.getCollection('suppliers'); },
   async getSales() { return this.getCollection('sales'); },
+  async getCreditNotes() { return this.getCollection('creditNotes'); },
+  async generateNextCreditNoteNumber(): Promise<string> {
+    const db = getDB();
+    const prefix = 'AV';
+    const counter = (db as any).creditNoteCounter || 0;
+    (db as any).creditNoteCounter = counter + 1;
+    saveDB(db);
+    return `${prefix}-${String(counter + 1).padStart(6, '0')}`;
+  },
   async getTransactions() { return this.getCollection('transactions'); },
 
   async getDashboardStats(range: TimeRange = '7D'): Promise<DashboardStats> {

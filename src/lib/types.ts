@@ -8,7 +8,8 @@ export enum AppView {
   HR = 'HR',
   FINANCE = 'FINANCE',
   SETTINGS = 'SETTINGS',
-  AUDIT_LOG = 'AUDIT_LOG'
+  AUDIT_LOG = 'AUDIT_LOG',
+  CREDIT_NOTES = 'CREDIT_NOTES'
 }
 
 export type TimeRange = '1D' | '7D' | '1M' | '1Y' | 'ALL';
@@ -93,7 +94,11 @@ export interface SaleItem {
   productId: string;
   name: string;
   quantity: number;
-  price: number;
+  price: number; // unit price HT (major units)
+  vatRate: number; // percent, from tax_rates (TO VERIFY)
+  lineHt: number;
+  lineVat: number;
+  lineTtc: number;
 }
 
 export interface Sale {
@@ -104,11 +109,33 @@ export interface Sale {
   buyerIce?: string;
   buyerAddress?: string;
   date: string; // ISO string
-  amount: number; // This acts as Total TTC
-  tva: number; // Percentage (e.g., 20)
+  currency: string;
+  subtotalHt: number;
+  totalVat: number;
+  amount: number; // Total TTC
   items: SaleItem[];
-  status: 'PAID' | 'PENDING' | 'OVERDUE';
+  status: 'DRAFT' | 'VALIDATED' | 'PAID' | 'PENDING' | 'OVERDUE' | 'CANCELLED';
   type?: 'SALE' | 'PURCHASE';
+  validatedAt?: string;
+  creditNoteId?: string;
+}
+
+export interface CreditNote {
+  id: string;
+  number: string;
+  originalInvoiceId: string;
+  originalInvoiceNumber: string;
+  customerName: string;
+  buyerIce?: string;
+  date: string;
+  currency: string;
+  subtotalHt: number;
+  totalVat: number;
+  amount: number; // TTC
+  items: SaleItem[];
+  reason: string;
+  status: 'DRAFT' | 'VALIDATED';
+  validatedAt?: string;
 }
 
 export interface Transaction {
