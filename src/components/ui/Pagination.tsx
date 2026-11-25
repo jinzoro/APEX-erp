@@ -3,18 +3,7 @@ import { cn } from '@/lib/cn';
 import { cva } from 'class-variance-authority';
 
 const paginationVariants = cva(
-  'flex flex-wrap items-center justify-center text-sm font-medium border border-slate-200 rounded-lg gap-1',
-  {
-    variants: {
-      size: {
-        default: 'h-9',
-        sm: 'h-8',
-      },
-    },
-    defaultVariants: {
-      size: 'default',
-    },
-  }
+  'flex flex-wrap items-center justify-center text-sm font-medium border border-slate-200 rounded-lg gap-1'
 );
 
 interface PaginationProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -52,9 +41,9 @@ function PaginationButton({
       }}
       disabled={disabled || active}
       className={cn(
-        'flex w-9 h-9 shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-1 disabled:pointer-events-none disabled:opacity-50',
-        active ? 'bg-brand-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-100',
-        disabled ? 'text-slate-300' : '',
+        'flex w-9 h-9 shrink-0 cursor-pointer items-center justify-center rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1 disabled:pointer-events-none disabled:opacity-50',
+        active ? 'bg-brand-50 text-brand-600 border border-brand-200' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-slate-900',
+        disabled ? 'text-slate-300 border-slate-100' : '',
         size === 'sm' ? 'h-8 w-8 text-xs' : 'h-9 w-9 text-sm'
       )}
       aria-label={pageLabel}

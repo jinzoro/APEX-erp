@@ -9,7 +9,7 @@ export function Skeleton({ className, ...props }: SkeletonProps) {
   return (
     <div
       className={cn(
-        'flex items-center gap-2 space-y-2 rounded-md bg-slate-200 px-4 py-3 animate-pulse',
+        'flex items-center gap-2 space-y-2 rounded-lg bg-slate-200 px-4 py-3 animate-pulse',
         className
       )}
       {...props}

@@ -9,17 +9,19 @@ interface TopBarProps {
 
 export function TopBar({ title, description, actions }: TopBarProps) {
   return (
-    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 flex-shrink-0">
+    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 shadow-sm">
       <div>
         <h1 className="text-lg font-semibold text-slate-900 leading-tight">{title}</h1>
         {description && <p className="text-xs text-slate-500">{description}</p>}
       </div>
       <div className="flex items-center gap-4">
         {actions}
-        <button className="p-2 text-slate-500 hover:text-slate-800 transition-colors">
+        <button className="p-2.5 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">
           <Icons.Bell className="h-5 w-5" />
         </button>
-        <div className="h-8 w-8 rounded-full bg-slate-200" />
+        <div className="h-8 w-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 font-bold text-xs">
+          A
+        </div>
       </div>
     </header>
   );

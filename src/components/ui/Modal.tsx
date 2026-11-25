@@ -1,6 +1,8 @@
 import * as React from 'react';
-import { cn } from '@/lib/cn';
 import { AnimatePresence, motion } from 'framer-motion';
+import { cn } from '@/lib/cn';
+import { Button } from './Button';
+
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -46,7 +48,12 @@ export const Modal: React.FC<ModalProps> = ({
             className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className={cn('relative w-full bg-white rounded-xl shadow-xl border border-slate-200', sizeClasses[size])}>
+            <div
+              className={cn(
+                'relative w-full bg-white rounded-xl shadow-xl border border-slate-200',
+                sizeClasses[size]
+              )}
+            >
               {showCloseButton && (
                 <button
                   onClick={onClose}
@@ -60,7 +67,7 @@ export const Modal: React.FC<ModalProps> = ({
                 </button>
               )}
               {title && (
-                <div className="flex items-start gap-3 px-6 py-4 border-b border-slate-200 bg-slate-50/50 rounded-t-xl">
+                <div className="flex items-start gap-3 px-6 py-4 border-b border-slate-100 bg-slate-50/50 rounded-t-xl">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 text-brand-600">
                     <circle cx="12" cy="12" r="10" />
                     <line x1="12" y1="8" x2="12" y2="12" />
@@ -130,5 +137,3 @@ export function ConfirmDialog({
     </Modal>
   );
 }
-
-import { Button } from './Button';

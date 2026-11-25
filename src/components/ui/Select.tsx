@@ -3,36 +3,68 @@ import { cn } from '@/lib/cn';
 import { VariantProps } from 'class-variance-authority';
 import { cva } from 'class-variance-authority';
 
-const selectVariants = cva(
-  'inline-flex h-10 w-full items-center justify-center rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50',
+const selectTriggerVariants = cva(
+  'inline-flex h-10 w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 disabled:bg-slate-50 disabled:text-slate-400 disabled:pointer-events-none cursor-pointer',
   {
     variants: {
+      error: {
+        true: 'border-rose-400 focus:ring-rose-500 focus:border-rose-500',
+      },
       size: {
-        default: 'h-10 px-3',
-        sm: 'h-9 px-2 text-xs',
-        lg: 'h-11 px-4 text-base',
+        default: 'h-10 px-4 py-3 text-sm',
+        sm: 'h-9 px-3 py-2 text-xs',
+        lg: 'h-11 px-4 py-3 text-base',
       },
     },
     defaultVariants: {
       size: 'default',
+      error: false,
     },
   }
 );
 
-interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {}
+const selectContentVariants = cva(
+  'z-50 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg text-sm text-slate-900',
+  {
+    variants: {
+      state: {
+        open: 'animate-in fade-in slide-in-from-top-2',
+        closed: 'animate-out fade-out zoom-out-95',
+      },
+    },
+  }
+);
 
-export function Select({ className, children, ...props }: SelectProps & VariantProps<typeof selectVariants>) {
+interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
+  error?: string;
+  size?: 'default' | 'sm' | 'lg';
+}
+
+export function Select({ className, error, size: selectSize = 'default', children, ...props }: SelectProps & VariantProps<typeof selectTriggerVariants>) {
+  const hasError = !!error;
   return (
-    <select className={cn(selectVariants({ size: 'default' }), className)} {...props}>
+    <select
+      className={cn(
+        selectTriggerVariants({ size: selectSize }),
+        hasError && 'border-rose-400 focus:ring-rose-500 focus:border-rose-500',
+        className
+      )}
+      {...props}
+    >
       {children}
     </select>
   );
 }
 
-export const SelectTrigger = React.forwardRef<HTMLSelectElement, SelectProps>(({ className, ...props }, ref) => {
+export const SelectTrigger = React.forwardRef<HTMLSelectElement, SelectProps>(({ className, error, size: selectSize = 'default', ...props }, ref) => {
+  const hasError = !!error;
   return (
     <select
-      className={cn(selectVariants({ size: 'default' }), className)}
+      className={cn(
+        selectTriggerVariants({ size: selectSize }),
+        hasError && 'border-rose-400 focus:ring-rose-500 focus:border-rose-500',
+        className
+      )}
       ref={ref}
       {...props}
     />
@@ -40,11 +72,11 @@ export const SelectTrigger = React.forwardRef<HTMLSelectElement, SelectProps>(({
 });
 SelectTrigger.displayName = 'SelectTrigger';
 
-export const SelectContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, children, ...props }, ref) => {
+export const SelectContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement> & { state?: 'open' | 'closed' }>(({ className, children, state = 'open', ...props }, ref) => {
   return (
     <div
       ref={ref}
-      className={cn('z-50 max-h-96 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-md border border-slate-200 bg-white p-1 shadow-lg text-sm text-slate-900 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2', className)}
+      className={cn(selectContentVariants({ state }), className)}
       {...props}
     >
       <div className="p-1">{children}</div>
@@ -115,4 +147,4 @@ export const SelectScrollUpButton = React.forwardRef<HTMLButtonElement, React.HT
 ));
 SelectScrollUpButton.displayName = 'SelectScrollUpButton';
 
-export { selectVariants };
+export { selectTriggerVariants, selectContentVariants };

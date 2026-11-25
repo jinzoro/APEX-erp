@@ -38,6 +38,20 @@ export const customerSchema = z.object({
   email: z.string().email('Invalid email address'),
   phone: z.string().min(8, 'Phone number is required'),
   ice: iceSchema.optional().or(z.literal('')),
+  if: ifSchema.optional().or(z.literal('')),
+  rib: ribSchema.optional().or(z.literal('')),
+  cin: cinSchema.optional().or(z.literal('')),
+  cnssNumber: cnssSchema.optional().or(z.literal('')),
+  patente: z.string().optional().or(z.literal('')),
+  rc: z.string().optional().or(z.literal('')),
+  rcCourt: z.string().optional().or(z.literal('')),
+  taxId: z.string().optional().or(z.literal('')),
+  bankRib: ribSchema.optional().or(z.literal('')),
+  shareCapital: z.preprocess(
+    (val) => (val === '' || val === undefined ? undefined : Number(val)),
+    z.number().min(0, 'Share capital must be positive').optional()
+  ),
+  legalForm: z.string().optional().or(z.literal('')),
   address: z.string().optional(),
   tier: z.enum(['LEAD', 'RECURRING', 'VIP']),
 });

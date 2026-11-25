@@ -102,7 +102,18 @@ export interface Customer {
   email: string;
   phone: string;
   address?: string;
-  ice?: string;
+  ice?: string; // ICE - Identifiant Commun de l'Entreprise (15 digits)
+  if?: string; // Identifiant Fiscal (1-10 digits)
+  rib?: string; // RIB bancaire (24 digits)
+  cin?: string; // CIN - Carte Nationale d'Identité
+  cnssNumber?: string; // CNSS - Caisse Nationale de Sécurité Sociale (9 digits)
+  patente?: string; // Patente / TP - taxe professionnelle
+  rc?: string; // Registre de Commerce
+  rcCourt?: string; // Tribunal de Commerce
+  taxId?: string; // Tax identification number
+  bankRib?: string; // Bank RIB (24 digits)
+  shareCapital?: number; // Capital social (MAD)
+  legalForm?: string; // SARL, SA, SARL AU, SAS, SNC, Entreprise Individuelle...
   totalSales: number;
   lastOrderDate: string;
   tier: 'LEAD' | 'RECURRING' | 'VIP';
