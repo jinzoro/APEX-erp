@@ -2,11 +2,23 @@ import React, { useState, useEffect, useContext } from 'react';
 import { DeliveryNote, Sale } from '@/lib/types';
 import { backendService } from '@/services/backendSimulator';
 import { AppContext } from '@/lib/context';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
+import { Badge } from '@/components/ui/Badge';
+import { useAppToast } from '@/components/ui/ToastProvider';
+import { Icons } from '@/lib/constants';
 
 const DeliveryNotes: React.FC = () => {
-  const { } = useContext(AppContext);
+  const {} = useContext(AppContext);
+  const toast = useAppToast();
   const [notes, setNotes] = useState<DeliveryNote[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState('');
   const [qtys, setQtys] = useState<Record<string, number>>({});
@@ -15,13 +27,17 @@ const DeliveryNotes: React.FC = () => {
     const [n, s] = await Promise.all([backendService.getDeliveryNotes(), backendService.getSales()]);
     setNotes(n as DeliveryNote[]);
     setSales(s as Sale[]);
+    setLoading(false);
   };
-  useEffect(() => { fetch(); }, []);
 
-  const selectedSale = sales.find(s => s.id === selectedSaleId);
+  useEffect(() => {
+    fetch();
+  }, []);
+
+  const selectedSale = sales.find((s) => s.id === selectedSaleId);
 
   const openModal = (saleId: string) => {
-    const sale = sales.find(s => s.id === saleId);
+    const sale = sales.find((s) => s.id === saleId);
     if (!sale) return;
     setSelectedSaleId(saleId);
     const q: Record<string, number> = {};
@@ -31,8 +47,11 @@ const DeliveryNotes: React.FC = () => {
   };
 
   const handleCreate = async () => {
-    const sale = sales.find(s => s.id === selectedSaleId);
-    if (!sale) return;
+    const sale = sales.find((s) => s.id === selectedSaleId);
+    if (!sale) {
+      toast.error({ title: 'Error', description: 'Please select a sale order' });
+      return;
+    }
     const number = await backendService.generateNextDeliveryNoteNumber();
     const note: DeliveryNote = {
       id: Math.random().toString(36).substr(2, 9),
@@ -42,81 +61,129 @@ const DeliveryNotes: React.FC = () => {
       saleNumber: sale.orderNumber,
       customerName: sale.customerName,
       buyerIce: sale.buyerIce,
-      items: sale.items.map(it => ({ productId: it.productId, name: it.name, quantity: it.quantity, delivered: qtys[it.productId] || 0 })),
+      items: sale.items.map((it) => ({
+        productId: it.productId,
+        name: it.name,
+        quantity: it.quantity,
+        delivered: qtys[it.productId] || 0,
+      })),
       status: 'VALIDATED',
       validatedAt: new Date().toISOString(),
     };
     await backendService.addItem('deliveryNotes', note);
+    toast.success({ title: 'Success', description: 'Delivery note created' });
     setShowModal(false);
     setSelectedSaleId('');
     fetch();
   };
 
   return (
-    <div className="p-8 h-full flex flex-col bg-slate-50/30">
-      <header className="flex items-center justify-between mb-8">
-        <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Bons de livraison</h2>
-          <p className="text-slate-500 font-medium">Livraison partielle / totale</p>
-        </div>
-        <button onClick={() => { if (sales.length) openModal(sales[0].id); }} className="px-6 py-3 bg-blue-600 text-white rounded-2xl font-bold shadow-lg flex items-center gap-2 text-sm uppercase tracking-widest">
-          <span>+</span> Nouveau BL
-        </button>
-      </header>
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
-        <div className="flex-1 overflow-y-auto custom-scroll">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-slate-50 bg-slate-50/50 sticky top-0 z-10">
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">N°</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Facture</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Client</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Statut</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {notes.length === 0 ? (
-                <tr><td colSpan={5} className="py-20 text-center text-slate-200 font-black uppercase text-xs tracking-widest">Aucun bon de livraison</td></tr>
-              ) : notes.map(n => (
-                <tr key={n.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-8 py-6 text-sm font-black text-slate-900">{n.number}</td>
-                  <td className="px-8 py-6 text-sm text-slate-700">{n.saleNumber}</td>
-                  <td className="px-8 py-6 text-sm text-slate-700">{n.customerName}</td>
-                  <td className="px-8 py-6 text-sm text-slate-500">{n.date}</td>
-                  <td className="px-8 py-6 text-sm text-emerald-600 font-black">{n.status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Bons de livraison"
+        description="Delivery notes, partial shipments, and stock movement logs"
+        actions={
+          <Button
+            onClick={() => {
+              if (sales.length > 0) openModal(sales[0].id);
+              else toast.error({ title: 'No Sales', description: 'Create a sale before generating a delivery note' });
+            }}
+          >
+            <Icons.Plus className="w-4 h-4 mr-2" />
+            Nouveau BL
+          </Button>
+        }
+      />
 
-      {showModal && selectedSale && (
-        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-           <div className="bg-white rounded-[3.5rem] w-full max-w-2xl shadow-2xl overflow-hidden">
-              <div className="bg-slate-900 p-10 text-white">
-                 <h3 className="text-3xl font-black tracking-tight">Nouveau BL</h3>
-                 <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2">{selectedSale.orderNumber} — {selectedSale.customerName}</p>
-              </div>
-              <div className="p-10 space-y-4">
-                 <select className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl font-bold" value={selectedSaleId} onChange={e => openModal(e.target.value)}>
-                    {sales.map(s => <option key={s.id} value={s.id}>{s.orderNumber} - {s.customerName}</option>)}
-                 </select>
-                 {selectedSale.items.map(it => (
-                   <div key={it.productId} className="flex items-center gap-4">
-                     <span className="flex-1 font-bold text-slate-700">{it.name} (commandé: {it.quantity})</span>
-                     <input type="number" value={qtys[it.productId] || 0} onChange={e => setQtys({...qtys, [it.productId]: Number(e.target.value)})} className="w-24 p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-center" />
-                   </div>
-                 ))}
-                 <div className="flex gap-6 pt-4">
-                    <button onClick={() => setShowModal(false)} className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-slate-400">Annuler</button>
-                    <button onClick={handleCreate} className="flex-1 py-4 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest">Créer</button>
-                 </div>
-              </div>
-           </div>
-        </div>
-      )}
+      <Card>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>N° BL</TableHead>
+              <TableHead>N° Facture</TableHead>
+              <TableHead>Client</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Statut</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                  Chargement...
+                </TableCell>
+              </TableRow>
+            ) : notes.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                  Aucun bon de livraison trouvé
+                </TableCell>
+              </TableRow>
+            ) : (
+              notes.map((n) => (
+                <TableRow key={n.id}>
+                  <TableCell className="font-bold text-slate-900 font-mono text-xs">{n.number}</TableCell>
+                  <TableCell className="text-slate-700 font-medium">{n.saleNumber}</TableCell>
+                  <TableCell className="text-slate-700">{n.customerName}</TableCell>
+                  <TableCell className="text-slate-500 text-xs">{n.date}</TableCell>
+                  <TableCell>
+                    <Badge variant="success">{n.status}</Badge>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </Card>
+
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title="Créer un Bon de Livraison"
+        description="Consignez la quantité livrée pour chaque ligne de commande"
+        size="md"
+      >
+        {selectedSale && (
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-slate-700">Facture associée</label>
+              <Select value={selectedSaleId} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => openModal(e.target.value)}>
+                {sales.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.orderNumber} - {s.customerName}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <label className="text-xs font-semibold text-slate-700">Quantités livrées</label>
+              {selectedSale.items.map((it) => (
+                <div key={it.productId} className="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-200">
+                  <span className="text-sm font-medium text-slate-800">
+                    {it.name} <span className="text-xs text-slate-500">(Commandé: {it.quantity})</span>
+                  </span>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={it.quantity}
+                    className="w-24 text-center font-bold"
+                    value={qtys[it.productId] ?? it.quantity}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQtys({ ...qtys, [it.productId]: Number(e.target.value) })}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+              <Button variant="outline" onClick={() => setShowModal(false)}>
+                Annuler
+              </Button>
+              <Button onClick={handleCreate}>Valider le BL</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

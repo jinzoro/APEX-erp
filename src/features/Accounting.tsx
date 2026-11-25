@@ -1,14 +1,27 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useMemo, useContext } from 'react';
 import { Account, JournalEntry } from '@/lib/types';
 import { backendService } from '@/services/backendSimulator';
 import { currencyService } from '@/services/currencyService';
 import { AppContext } from '@/lib/context';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
+import { PageHeader } from '@/components/ui/PageHeader';
+
+const TABS = [
+  { key: 'ledger' as const, label: 'Plan Comptable' },
+  { key: 'journal' as const, label: 'Journal' },
+  { key: 'trial' as const, label: 'Balance' },
+] as const;
+
+type TabKey = (typeof TABS)[number]['key'];
 
 const Accounting: React.FC = () => {
   const { currency: baseCurrency } = useContext(AppContext);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [entries, setEntries] = useState<JournalEntry[]>([]);
-  const [tab, setTab] = useState<'ledger' | 'journal' | 'trial'>('ledger');
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<TabKey>('ledger');
 
   const fetch = async () => {
     const [a, j] = await Promise.all([
@@ -17,87 +30,231 @@ const Accounting: React.FC = () => {
     ]);
     setAccounts(a as Account[]);
     setEntries(j as JournalEntry[]);
+    setLoading(false);
   };
-  useEffect(() => { fetch(); }, []);
 
-  // trial balance
-  const balances: Record<string, { debit: number; credit: number }> = {};
-  for (const e of entries) {
-    for (const l of e.lines) {
-      if (!balances[l.accountCode]) balances[l.accountCode] = { debit: 0, credit: 0 };
-      balances[l.accountCode].debit += l.debit;
-      balances[l.accountCode].credit += l.credit;
+  useEffect(() => {
+    fetch();
+  }, []);
+
+  // Trial balance aggregation
+  const balances = useMemo(() => {
+    const map: Record<string, { debit: number; credit: number }> = {};
+    for (const e of entries) {
+      for (const l of e.lines) {
+        if (!map[l.accountCode]) map[l.accountCode] = { debit: 0, credit: 0 };
+        map[l.accountCode].debit += l.debit;
+        map[l.accountCode].credit += l.credit;
+      }
     }
-  }
+    return map;
+  }, [entries]);
+
+  const totalDebit = useMemo(
+    () => Object.values(balances).reduce((sum, b) => sum + b.debit, 0),
+    [balances]
+  );
+  const totalCredit = useMemo(
+    () => Object.values(balances).reduce((sum, b) => sum + b.credit, 0),
+    [balances]
+  );
+  const trialRows = useMemo(
+    () =>
+      accounts
+        .map((a) => {
+          const b = balances[a.code] || { debit: 0, credit: 0 };
+          if (b.debit === 0 && b.credit === 0) return null;
+          return { account: a, balance: b };
+        })
+        .filter(Boolean) as { account: Account; balance: { debit: number; credit: number } }[],
+    [accounts, balances]
+  );
 
   return (
-    <div className="p-8 h-full flex flex-col bg-slate-50/30">
-      <header className="flex items-center justify-between mb-8">
-        <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Comptabilité (CGNC)</h2>
-          <p className="text-slate-500 font-medium">Plan comptable, journal, balance</p>
-        </div>
-        <div className="flex gap-2">
-          {(['ledger', 'journal', 'trial'] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-xl text-xs font-black uppercase ${tab === t ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500'}`}>{t}</button>
+    <div className="space-y-6">
+      <PageHeader
+        title="Comptabilité (CGNC)"
+        description="Chart of accounts, sales journal, ledger & trial balance"
+        actions={
+          <Button variant="outline" size="sm">
+            Nouvelle écriture
+          </Button>
+        }
+      />
+
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        <div className="flex gap-2 flex-wrap" role="tablist" aria-label="Comptabilité onglets">
+          {TABS.map((t) => (
+            <Button
+              key={t.key}
+              role="tab"
+              aria-selected={tab === t.key}
+              variant={tab === t.key ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setTab(t.key)}
+            >
+              {t.label}
+            </Button>
           ))}
         </div>
-      </header>
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
-        <div className="flex-1 overflow-y-auto custom-scroll p-6">
-          {tab === 'ledger' && (
-            <table className="w-full text-left">
-              <thead><tr className="border-b border-slate-50"><th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase">Code</th><th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase">Compte</th><th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase">Type</th></tr></thead>
-              <tbody className="divide-y divide-slate-50">
-                {accounts.map(a => (
-                  <tr key={a.id}><td className="px-4 py-3 font-black text-slate-900">{a.code}</td><td className="px-4 py-3 text-slate-700">{a.name}</td><td className="px-4 py-3 text-slate-500 text-xs">{a.type}</td></tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          {tab === 'journal' && (
-            <div className="space-y-4">
-              {entries.length === 0 && <p className="text-slate-300 font-black uppercase text-xs tracking-widest text-center py-20">Aucune écriture</p>}
-              {entries.map(e => (
-                <div key={e.id} className="border border-slate-100 rounded-2xl p-4">
+        <div className="ml-auto flex items-end gap-2">
+          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Devise</span>
+          <span className="font-mono text-sm font-bold text-slate-900">{baseCurrency}</span>
+        </div>
+      </div>
+
+      <Card className="flex-1">
+        {tab === 'ledger' && (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Code CGNC</TableHead>
+                <TableHead>Compte</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead className="text-right">Solde</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                    Chargement du plan comptable…
+                  </TableCell>
+                </TableRow>
+              ) : accounts.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                    Aucun compte configuré.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                accounts.map((a) => {
+                  const b = balances[a.code] || { debit: 0, credit: 0 };
+                  const solde = b.debit - b.credit;
+                  return (
+                    <TableRow key={a.id}>
+                      <TableCell className="font-mono text-xs font-bold text-slate-900">{a.code}</TableCell>
+                      <TableCell className="text-slate-700 font-medium">{a.name}</TableCell>
+                      <TableCell className="text-slate-500 text-xs uppercase tracking-widest">{a.type}</TableCell>
+                      <TableCell className="text-right font-bold text-slate-900">
+                        {currencyService.format(solde, baseCurrency)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        )}
+        {tab === 'journal' && (
+          <div className="space-y-3">
+            {loading ? (
+              <div className="text-center py-20 text-slate-500">Chargement du journal…</div>
+            ) : entries.length === 0 ? (
+              <div className="text-center py-20 text-slate-500 font-black uppercase text-xs tracking-widest">Aucune écriture comptable</div>
+            ) : (
+              entries.map((e) => (
+                <div key={e.id} className="border border-slate-100 rounded-xl p-4">
                   <div className="flex justify-between mb-2">
-                    <span className="font-black text-slate-900">{e.number} — {e.journal}</span>
+                    <span className="font-bold text-slate-900 text-sm">{e.number} — {e.journal}</span>
                     <span className="text-xs text-slate-400">{new Date(e.date).toLocaleDateString()}</span>
                   </div>
                   <p className="text-xs text-slate-500 mb-2">{e.description}</p>
-                  <table className="w-full text-xs">
-                    <thead><tr><th className="text-left text-slate-400">Compte</th><th className="text-right text-slate-400">Débit</th><th className="text-right text-slate-400">Crédit</th></tr></thead>
-                    <tbody>
-                      {e.lines.map(l => (
-                        <tr key={l.id}><td className="py-1">{l.accountCode} {l.accountName}</td><td className="text-right">{l.debit ? currencyService.format(l.debit, baseCurrency) : ''}</td><td className="text-right">{l.credit ? currencyService.format(l.credit, baseCurrency) : ''}</td></tr>
+                  <Table className="text-xs">
+                    <thead>
+                      <TableRow>
+                        <TableHead>Compte</TableHead>
+                        <TableHead className="text-right">Débit</TableHead>
+                        <TableHead className="text-right">Crédit</TableHead>
+                      </TableRow>
+                    </thead>
+                    <TableBody>
+                      {e.lines.map((l) => (
+                        <TableRow key={l.id}>
+                          <TableCell>{l.accountCode} — {l.accountName}</TableCell>
+                          <TableCell className="text-right text-slate-900">
+                            {l.debit ? currencyService.format(l.debit, baseCurrency) : '—'}
+                          </TableCell>
+                          <TableCell className="text-right text-slate-900">
+                            {l.credit ? currencyService.format(l.credit, baseCurrency) : '—'}
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
-              ))}
+              ))
+            )}
+          </div>
+        )}
+        {tab === 'trial' && (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Code CGNC</TableHead>
+                <TableHead>Compte</TableHead>
+                <TableHead className="text-right">Débit</TableHead>
+                <TableHead className="text-right">Crédit</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                    Chargement de la balance…
+                  </TableCell>
+                </TableRow>
+              ) : trialRows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                    Aucune écriture avec solde.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                trialRows.map(({ account, balance }) => (
+                  <TableRow key={account.id}>
+                    <TableCell className="font-mono text-xs font-bold text-slate-900">{account.code}</TableCell>
+                    <TableCell className="text-slate-700 font-medium">{account.name}</TableCell>
+                    <TableCell className="text-right font-bold text-slate-900">
+                      {currencyService.format(balance.debit, baseCurrency)}
+                    </TableCell>
+                    <TableCell className="text-right font-bold text-slate-900">
+                      {currencyService.format(balance.credit, baseCurrency)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+            <TableRow className="border-t border-slate-200 font-black bg-slate-50">
+              <TableCell className="px-4 py-3 text-slate-500 text-xs uppercase">Total</TableCell>
+              <TableCell className="px-4 py-3 text-slate-900"></TableCell>
+              <TableCell className="text-right px-4 py-3 font-bold text-slate-900">
+                {currencyService.format(totalDebit, baseCurrency)}
+              </TableCell>
+              <TableCell className="text-right px-4 py-3 font-bold text-slate-900">
+                {currencyService.format(totalCredit, baseCurrency)}
+              </TableCell>
+            </TableRow>
+          </Table>
+        )}
+      </Card>
+
+      {tab === 'trial' && (
+        <Card>
+          <div className="p-6">
+            <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2">Équilibre comptable</p>
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-semibold text-slate-600">Débit total:</span>
+              <span className="font-mono font-bold text-slate-900">{currencyService.format(totalDebit, baseCurrency)}</span>
+              <span className={`text-sm font-bold ${totalDebit === totalCredit ? 'text-emerald-600' : 'text-rose-600'}`}>
+                {totalDebit === totalCredit ? 'ÉQUILIBRÉ' : 'DÉSÉQUILIBRÉ'}
+              </span>
+              <span className="text-sm font-semibold text-slate-600">Crédit total:</span>
+              <span className="font-mono font-bold text-slate-900">{currencyService.format(totalCredit, baseCurrency)}</span>
             </div>
-          )}
-          {tab === 'trial' && (
-            <table className="w-full text-left">
-              <thead><tr className="border-b border-slate-50"><th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase">Code</th><th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase">Compte</th><th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase text-right">Débit</th><th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase text-right">Crédit</th></tr></thead>
-              <tbody className="divide-y divide-slate-50">
-                {accounts.map(a => {
-                  const b = balances[a.code] || { debit: 0, credit: 0 };
-                  if (b.debit === 0 && b.credit === 0) return null;
-                  return (
-                    <tr key={a.id}>
-                      <td className="px-4 py-3 font-black text-slate-900">{a.code}</td>
-                      <td className="px-4 py-3 text-slate-700">{a.name}</td>
-                      <td className="px-4 py-3 text-right">{currencyService.format(b.debit, baseCurrency)}</td>
-                      <td className="px-4 py-3 text-right">{currencyService.format(b.credit, baseCurrency)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
+          </div>
+        </Card>
+      )}
     </div>
   );
 };

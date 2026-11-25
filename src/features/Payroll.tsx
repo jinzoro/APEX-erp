@@ -4,113 +4,157 @@ import { backendService } from '@/services/backendSimulator';
 import { currencyService } from '@/services/currencyService';
 import { computePayslip } from '@/lib/payroll';
 import { AppContext } from '@/lib/context';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { Card } from '@/components/ui/Card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
+import { PageHeader } from '@/components/ui/PageHeader';
 
-interface RateMap { [k: string]: number; }
+interface RateMap {
+  [k: string]: number;
+}
 
 const Payroll: React.FC = () => {
   const { currency: baseCurrency } = useContext(AppContext);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [rates, setRates] = useState<RateMap>({});
   const [selected, setSelected] = useState<Employee | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const fetch = async () => {
     const emps = await backendService.getEmployees();
     setEmployees(emps as Employee[]);
     const r = await backendService.getCollection('payrollRates' as any);
     const map: RateMap = {};
-    for (const x of (r as any[])) map[x.key] = x.value;
+    for (const x of r as any[]) map[x.key] = x.value;
     setRates(map);
+    setLoading(false);
   };
-  useEffect(() => { fetch(); }, []);
+
+  useEffect(() => {
+    fetch();
+  }, []);
 
   const g = (k: string, d: number) => rates[k] ?? d;
 
   return (
-    <div className="p-8 h-full flex flex-col bg-slate-50/30">
-      <header className="mb-8">
-        <h2 className="text-3xl font-black text-slate-900 tracking-tight">Paie (Payroll)</h2>
-        <p className="text-slate-500 font-medium">Bulletins de paie — taux TO VERIFY</p>
-      </header>
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
-        <div className="flex-1 overflow-y-auto custom-scroll">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-slate-50 bg-slate-50/50 sticky top-0 z-10">
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Employé</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Brut</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">CNSS</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">AMO</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">IR</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Net</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {employees.filter(e => e.status === 'ACTIVE').map(e => {
-                const gross = e.grossSalary || e.salary || 0;
-                const ps = computePayslip(
-                  gross,
-                  g('CNSS_EMPLOYEE', 4.48),
-                  g('AMO_EMPLOYEE', 2.26),
-                  g('IR_PROFESSIONAL_EXPENSE_DEDUCTION', 20),
-                  g('CNSS_EMPLOYER', 8.98),
-                  g('AMO_EMPLOYER', 4.11),
-                  e.dependents || 0,
-                  g('FAMILY_DEDUCTION_PER_DEPENDENT', 500) / 12,
-                );
-                return (
-                  <tr key={e.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-8 py-6 text-sm font-bold text-slate-800">{e.firstName} {e.lastName}</td>
-                    <td className="px-8 py-6">{currencyService.format(ps.gross, baseCurrency)}</td>
-                    <td className="px-8 py-6">{currencyService.format(ps.cnssEmployee, baseCurrency)}</td>
-                    <td className="px-8 py-6">{currencyService.format(ps.amoEmployee, baseCurrency)}</td>
-                    <td className="px-8 py-6">{currencyService.format(ps.ir, baseCurrency)}</td>
-                    <td className="px-8 py-6 font-black text-slate-900">{currencyService.format(ps.net, baseCurrency)}</td>
-                    <td className="px-8 py-6 text-right">
-                      <button onClick={() => setSelected(e)} className="px-3 py-2 bg-slate-50 text-slate-600 rounded-xl text-xs font-black">Bulletin</button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Payroll & Payslips"
+        description="Moroccan payroll computation and employee payslip generation"
+      />
+
+      <Card>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Employee</TableHead>
+              <TableHead>Gross Salary</TableHead>
+              <TableHead>CNSS</TableHead>
+              <TableHead>AMO</TableHead>
+              <TableHead>IR</TableHead>
+              <TableHead>Net Salary</TableHead>
+              <TableHead className="text-right">Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                  Loading payroll...
+                </TableCell>
+              </TableRow>
+            ) : (
+              employees
+                .filter((e) => e.status === 'ACTIVE')
+                .map((e) => {
+                  const gross = e.grossSalary || e.salary || 0;
+                  const ps = computePayslip(
+                    gross,
+                    g('CNSS_EMPLOYEE', 4.48),
+                    g('AMO_EMPLOYEE', 2.26),
+                    g('IR_PROFESSIONAL_EXPENSE_DEDUCTION', 20),
+                    g('CNSS_EMPLOYER', 8.98),
+                    g('AMO_EMPLOYER', 4.11),
+                    e.dependents || 0,
+                    g('FAMILY_DEDUCTION_PER_DEPENDENT', 500) / 12
+                  );
+                  return (
+                    <TableRow key={e.id}>
+                      <TableCell className="font-semibold text-slate-900">
+                        {e.firstName} {e.lastName}
+                      </TableCell>
+                      <TableCell>{currencyService.format(ps.gross, baseCurrency)}</TableCell>
+                      <TableCell>{currencyService.format(ps.cnssEmployee, baseCurrency)}</TableCell>
+                      <TableCell>{currencyService.format(ps.amoEmployee, baseCurrency)}</TableCell>
+                      <TableCell>{currencyService.format(ps.ir, baseCurrency)}</TableCell>
+                      <TableCell className="font-bold text-slate-900">
+                        {currencyService.format(ps.net, baseCurrency)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="outline" size="sm" onClick={() => setSelected(e)}>
+                          View Payslip
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+            )}
+          </TableBody>
+        </Table>
+      </Card>
 
       {selected && (
-        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-           <div className="bg-white rounded-[3.5rem] w-full max-w-2xl shadow-2xl overflow-hidden">
-              <div className="bg-slate-900 p-10 text-white">
-                 <h3 className="text-3xl font-black tracking-tight">Bulletin de paie</h3>
-                 <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2">{selected.firstName} {selected.lastName} — {new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</p>
-              </div>
-              <div className="p-10 space-y-2 text-sm">
-                {(() => {
-                  const gross = selected.grossSalary || selected.salary || 0;
-                  const ps = computePayslip(gross, g('CNSS_EMPLOYEE',4.48), g('AMO_EMPLOYEE',2.26), g('IR_PROFESSIONAL_EXPENSE_DEDUCTION',20), g('CNSS_EMPLOYER',8.98), g('AMO_EMPLOYER',4.11), selected.dependents||0, g('FAMILY_DEDUCTION_PER_DEPENDENT',500)/12);
-                  const rows = [
-                    ['Salaire brut', ps.gross],
-                    ['CNSS salarié', -ps.cnssEmployee],
-                    ['AMO salarié', -ps.amoEmployee],
-                    ['Frais professionnels', -ps.professionalExpense],
-                    ['Revenu imposable (mensuel)', ps.taxableMonthly],
-                    ['IR', -ps.ir],
-                    ['NET À PAYER', ps.net],
-                  ];
-                  return rows.map(([label, val]) => (
-                    <div key={String(label)} className="flex justify-between border-b border-slate-50 py-2">
-                      <span className="font-bold text-slate-700">{label}</span>
-                      <span className={`font-black ${label==='NET À PAYER'?'text-emerald-600':''}`}>{currencyService.format(Number(val), baseCurrency)}</span>
-                    </div>
-                  ));
-                })()}
-                <div className="flex gap-6 pt-6">
-                  <button onClick={() => setSelected(null)} className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-slate-400">Fermer</button>
-                  <button onClick={() => window.print()} className="flex-1 py-4 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest">Imprimer</button>
+        <Modal
+          isOpen={!!selected}
+          onClose={() => setSelected(null)}
+          title="Bulletin de Paie"
+          description={`${selected.firstName} ${selected.lastName} — ${new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`}
+          size="md"
+        >
+          <div className="space-y-3 py-2 text-sm">
+            {(() => {
+              const gross = selected.grossSalary || selected.salary || 0;
+              const ps = computePayslip(
+                gross,
+                g('CNSS_EMPLOYEE', 4.48),
+                g('AMO_EMPLOYEE', 2.26),
+                g('IR_PROFESSIONAL_EXPENSE_DEDUCTION', 20),
+                g('CNSS_EMPLOYER', 8.98),
+                g('AMO_EMPLOYER', 4.11),
+                selected.dependents || 0,
+                g('FAMILY_DEDUCTION_PER_DEPENDENT', 500) / 12
+              );
+              const rows = [
+                ['Salaire brut', ps.gross],
+                ['CNSS salarié', -ps.cnssEmployee],
+                ['AMO salarié', -ps.amoEmployee],
+                ['Frais professionnels', -ps.professionalExpense],
+                ['Revenu imposable (mensuel)', ps.taxableMonthly],
+                ['IR', -ps.ir],
+                ['NET À PAYER', ps.net],
+              ];
+              return rows.map(([label, val]) => (
+                <div key={String(label)} className="flex justify-between border-b border-slate-100 pb-2">
+                  <span className="font-medium text-slate-700">{label}</span>
+                  <span
+                    className={`font-semibold ${
+                      label === 'NET À PAYER' ? 'text-emerald-600 font-bold text-base' : 'text-slate-900'
+                    }`}
+                  >
+                    {currencyService.format(Number(val), baseCurrency)}
+                  </span>
                 </div>
-              </div>
-           </div>
-        </div>
+              ));
+            })()}
+            <div className="flex gap-3 pt-4 justify-end">
+              <Button variant="outline" onClick={() => setSelected(null)}>
+                Close
+              </Button>
+              <Button onClick={() => window.print()}>Print Payslip</Button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );

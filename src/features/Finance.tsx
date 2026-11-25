@@ -1,139 +1,213 @@
-
 import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { Transaction } from '@/lib/types';
 import { backendService } from '@/services/backendSimulator';
 import { currencyService } from '@/services/currencyService';
-import { Icons } from '@/lib/constants';
 import { AppContext } from '@/lib/context';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { Card, CardContent } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
+import { useAppToast } from '@/components/ui/ToastProvider';
+import { Icons } from '@/lib/constants';
 
 const Finance: React.FC = () => {
   const { currency: baseCurrency, rates } = useContext(AppContext);
-  
+  const toast = useAppToast();
+
   const [txs, setTxs] = useState<Transaction[]>([]);
-  const [showAddModal, setShowAddModal] = useState(false);
-  
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTx, setNewTx] = useState<Partial<Transaction>>({
-    description: '', amount: 0, localAmount: 0, category: 'Operation', type: 'EXPENSE', 
+    description: '',
+    amount: 0,
+    localAmount: 0,
+    category: 'Operation',
+    type: 'EXPENSE',
     date: new Date().toISOString().split('T')[0],
-    currency: 'MAD'
+    currency: 'MAD',
   });
 
-  const fetch = async () => {
+  const fetchTxs = async () => {
     const data = await backendService.getTransactions();
     setTxs(data);
+    setLoading(false);
   };
 
   useEffect(() => {
-    fetch();
+    fetchTxs();
   }, []);
 
   useEffect(() => {
     if (newTx.localAmount !== undefined && newTx.currency) {
-      const converted = currencyService.convert(
-        newTx.localAmount, 
-        newTx.currency, 
-        baseCurrency, 
-        rates
-      );
-      setNewTx(prev => prev.amount === converted ? prev : { ...prev, amount: converted });
+      const converted = currencyService.convert(newTx.localAmount, newTx.currency, baseCurrency, rates);
+      setNewTx((prev) => ({ ...prev, amount: converted }));
     }
   }, [newTx.localAmount, newTx.currency, baseCurrency, rates]);
 
   const handleLog = async () => {
-    if (!newTx.description || !newTx.amount) return;
+    if (!newTx.description || !newTx.amount) {
+      toast.error({ title: 'Error', description: 'Please fill in all fields' });
+      return;
+    }
     await backendService.logTransaction(newTx as Transaction);
-    setShowAddModal(false);
-    setNewTx({ 
-      description: '', amount: 0, localAmount: 0, category: 'Operation', 
-      type: 'EXPENSE', date: new Date().toISOString().split('T')[0], currency: 'MAD' 
+    toast.success({ title: 'Success', description: 'Transaction logged' });
+    setIsModalOpen(false);
+    setNewTx({
+      description: '',
+      amount: 0,
+      localAmount: 0,
+      category: 'Operation',
+      type: 'EXPENSE',
+      date: new Date().toISOString().split('T')[0],
+      currency: 'MAD',
     });
-    fetch();
+    fetchTxs();
   };
 
-  const totals = useMemo(() => ({
-    income: txs.filter(v => v.type === 'INCOME').reduce((a, b) => a + b.amount, 0),
-    expense: txs.filter(v => v.type === 'EXPENSE').reduce((a, b) => a + b.amount, 0)
-  }), [txs]);
+  const totals = useMemo(
+    () => ({
+      income: txs.filter((v) => v.type === 'INCOME').reduce((a, b) => a + b.amount, 0),
+      expense: txs.filter((v) => v.type === 'EXPENSE').reduce((a, b) => a + b.amount, 0),
+    }),
+    [txs]
+  );
 
   const allCurrencyCodes = useMemo(() => Object.keys(rates).sort(), [rates]);
 
   return (
-    <div className="p-8 h-full flex flex-col">
-      <header className="mb-8 flex justify-between items-center">
-        <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Ledger & Finance</h2>
-          <p className="text-slate-500 font-medium">Accounting base: <span className="text-emerald-600 font-black">{baseCurrency}</span></p>
-        </div>
-        <button onClick={() => setShowAddModal(true)} className="px-6 py-3 bg-emerald-600 text-white rounded-2xl font-bold shadow-xl flex items-center gap-2 transition-transform active:scale-95 text-xs uppercase tracking-widest">
-           <Icons.Plus /> Log Interaction
-        </button>
-      </header>
+    <div className="space-y-6">
+      <PageHeader
+        title="Finance & Treasury"
+        description="Accounting ledger and transaction management"
+        actions={
+          <Button onClick={() => setIsModalOpen(true)}>
+            <Icons.Plus className="w-4 h-4 mr-2" />
+            Log Entry
+          </Button>
+        }
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 shrink-0">
-        <div className="bg-emerald-500 p-8 rounded-[2rem] text-white shadow-xl">
-          <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Inflow</p>
-          <p className="text-4xl font-black tracking-tighter">{currencyService.format(totals.income, baseCurrency)}</p>
-        </div>
-        <div className="bg-rose-500 p-8 rounded-[2rem] text-white shadow-xl">
-          <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Outflow</p>
-          <p className="text-4xl font-black tracking-tighter">{currencyService.format(totals.expense, baseCurrency)}</p>
-        </div>
-        <div className="bg-slate-900 p-8 rounded-[2rem] text-white shadow-xl border border-slate-700">
-          <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Net Position</p>
-          <p className="text-4xl font-black tracking-tighter">{currencyService.format(totals.income - totals.expense, baseCurrency)}</p>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="bg-emerald-50 border-emerald-100">
+          <CardContent className="p-6">
+            <p className="text-xs font-semibold uppercase text-emerald-600 tracking-wider">Inflow</p>
+            <p className="text-2xl font-bold text-emerald-900 mt-1">
+              {currencyService.format(totals.income, baseCurrency)}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-rose-50 border-rose-100">
+          <CardContent className="p-6">
+            <p className="text-xs font-semibold uppercase text-rose-600 tracking-wider">Outflow</p>
+            <p className="text-2xl font-bold text-rose-900 mt-1">
+              {currencyService.format(totals.expense, baseCurrency)}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-slate-900 text-white">
+          <CardContent className="p-6">
+            <p className="text-xs font-semibold uppercase text-slate-400 tracking-wider">Net Position</p>
+            <p className="text-2xl font-bold mt-1">
+              {currencyService.format(totals.income - totals.expense, baseCurrency)}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm flex-1 overflow-hidden flex flex-col min-h-0">
-        <div className="p-6 border-b border-slate-100 font-black text-[10px] uppercase tracking-[0.2em] text-slate-400 bg-slate-50/30">Master Audit Ledger</div>
-        <div className="flex-1 overflow-y-auto custom-scroll">
-           {txs.length === 0 ? (
-             <div className="py-24 text-center"><p className="text-slate-200 font-black uppercase text-[10px] tracking-widest">Vault is currently empty</p></div>
-           ) : txs.map(t_item => (
-             <div key={t_item.id} className="flex items-center justify-between p-6 hover:bg-slate-50 transition-all border-b border-slate-50 group">
-               <div className="flex items-center gap-4">
-                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl shadow-sm ${t_item.type === 'INCOME' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                   {t_item.type === 'INCOME' ? '+' : '-'}
-                 </div>
-                 <div>
-                   <p className="text-sm font-black text-slate-900">{t_item.description}</p>
-                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{t_item.date}</p>
-                 </div>
-               </div>
-               <div className="text-right">
-                  <p className={`text-sm font-black ${t_item.type === 'INCOME' ? 'text-emerald-600' : 'text-slate-900'}`}>
-                    {currencyService.format(t_item.amount, baseCurrency)}
-                  </p>
-               </div>
-             </div>
-           ))}
-        </div>
-      </div>
+      <Card>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Date</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead className="text-right">Amount</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                  Loading transactions...
+                </TableCell>
+              </TableRow>
+            ) : txs.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                  No transactions found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              txs.map((t) => (
+                <TableRow key={t.id}>
+                  <TableCell className="text-xs text-slate-500">{t.date}</TableCell>
+                  <TableCell className="font-medium text-slate-900">{t.description}</TableCell>
+                  <TableCell className="text-sm">{t.category}</TableCell>
+                  <TableCell className={`text-right font-bold ${t.type === 'INCOME' ? 'text-emerald-600' : 'text-slate-900'}`}>
+                    {currencyService.format(t.amount, baseCurrency)}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </Card>
 
-      {showAddModal && (
-        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-           <div className="bg-white rounded-[3rem] w-full max-w-xl shadow-2xl overflow-hidden">
-              <div className="bg-slate-900 p-10 text-white"><h3 className="text-3xl font-black tracking-tight">Post Ledger Entry</h3></div>
-              <div className="p-10 space-y-6">
-                 <div className="grid grid-cols-2 gap-4">
-                    <button onClick={() => setNewTx({...newTx, type: 'INCOME'})} className={`py-4 rounded-2xl font-black text-xs uppercase border-2 transition-all ${newTx.type === 'INCOME' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-100 text-slate-400'}`}>Income</button>
-                    <button onClick={() => setNewTx({...newTx, type: 'EXPENSE'})} className={`py-4 rounded-2xl font-black text-xs uppercase border-2 transition-all ${newTx.type === 'EXPENSE' ? 'bg-rose-500 border-rose-500 text-white' : 'border-slate-100 text-slate-400'}`}>Expense</button>
-                 </div>
-                 <input type="text" placeholder="Description" value={newTx.description} onChange={e => setNewTx({...newTx, description: e.target.value})} className="w-full p-5 bg-slate-50 border rounded-2xl font-bold" />
-                 <div className="grid grid-cols-2 gap-4">
-                    <select value={newTx.currency} onChange={e => setNewTx({...newTx, currency: e.target.value})} className="w-full p-5 bg-slate-100 border rounded-2xl font-black">
-                      {allCurrencyCodes.map(code => <option key={code} value={code}>{code}</option>)}
-                    </select>
-                    <input type="number" value={newTx.localAmount} onChange={e => setNewTx({...newTx, localAmount: Number(e.target.value)})} className="w-full p-5 bg-slate-50 border rounded-2xl font-black text-blue-600" />
-                 </div>
-                 <div className="flex gap-6 pt-6">
-                    <button onClick={() => setShowAddModal(false)} className="flex-1 py-5 text-xs font-black uppercase text-slate-400 tracking-widest">Cancel</button>
-                    <button onClick={handleLog} className="flex-1 py-5 bg-slate-900 text-white rounded-3xl text-xs font-black uppercase shadow-2xl tracking-widest">Commit</button>
-                 </div>
-              </div>
-           </div>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Log Transaction"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant={newTx.type === 'INCOME' ? 'default' : 'outline'}
+              onClick={() => setNewTx({ ...newTx, type: 'INCOME' })}
+            >
+              Income
+            </Button>
+            <Button
+              variant={newTx.type === 'EXPENSE' ? 'default' : 'outline'}
+              onClick={() => setNewTx({ ...newTx, type: 'EXPENSE' })}
+            >
+              Expense
+            </Button>
+          </div>
+          <Input
+            placeholder="Description"
+            value={newTx.description}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTx({ ...newTx, description: e.target.value })}
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <Select
+              value={newTx.currency}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewTx({ ...newTx, currency: e.target.value })}
+            >
+              {allCurrencyCodes.map((code) => (
+                <option key={code} value={code}>
+                  {code}
+                </option>
+              ))}
+            </Select>
+            <Input
+              type="number"
+              placeholder="Amount"
+              value={newTx.localAmount}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTx({ ...newTx, localAmount: Number(e.target.value) })}
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleLog}>Commit</Button>
+          </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 };

@@ -266,6 +266,14 @@ export const backendService = {
     this.logAction(`Deleted ${collection}`, `Archived record for ${item?.name || 'Entity'}`);
   },
 
+  async updateCustomer(id: string, updates: any) { return this.updateItem('customers', id, updates); },
+  async addCustomer(item: any) { return this.addItem('customers', item); },
+  async deleteCustomer(id: string) { return this.deleteItem('customers', id); },
+
+  async updateProduct(id: string, updates: any) { return this.updateItem('products', id, updates); },
+  async addProduct(item: any) { return this.addItem('products', item); },
+  async deleteProduct(id: string) { return this.deleteItem('products', id); },
+
   async getProducts() { return this.getCollection('products'); },
   async getEmployees() { return this.getCollection('employees'); },
   async getCustomers() { return this.getCollection('customers'); },
