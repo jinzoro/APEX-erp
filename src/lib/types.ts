@@ -1,0 +1,271 @@
+
+export enum AppView {
+  DASHBOARD = 'DASHBOARD',
+  INVENTORY = 'INVENTORY',
+  SUPPLIERS = 'SUPPLIERS',
+  SALES = 'SALES',
+  CUSTOMERS = 'CUSTOMERS',
+  HR = 'HR',
+  FINANCE = 'FINANCE',
+  SETTINGS = 'SETTINGS',
+  AUDIT_LOG = 'AUDIT_LOG',
+  CREDIT_NOTES = 'CREDIT_NOTES',
+  ACCOUNTING = 'ACCOUNTING',
+  PAYROLL = 'PAYROLL',
+  DELIVERY_NOTES = 'DELIVERY_NOTES'
+}
+
+export type TimeRange = '1D' | '7D' | '1M' | '1Y' | 'ALL';
+
+export type ItemType = 'CONSUMABLE' | 'FIXED_ASSET';
+export type Language = 'EN' | 'FR' | 'AR';
+export type CurrencyCode = string;
+
+export interface CompanyInfo {
+  name: string;
+  legalForm?: string;
+  shareCapital?: number;
+  logo?: string; // Base64
+  address: string;
+  phone: string;
+  email: string;
+  ice: string; // Moroccan Identifiant Commun de l'Entreprise
+  if: string;  // Identifiant Fiscal
+  rc?: string;
+  rcCourt?: string;
+  patente?: string; // TP
+  cnssNumber?: string;
+  bankRib?: string;
+  taxId: string;
+  primaryColor?: string; // Hex code for theme
+}
+
+export interface Product {
+  id: string;
+  sku: string;
+  name: string;
+  category: string;
+  type: ItemType;
+  price: number;
+  cost: number;
+  stock: number;
+  minStock: number;
+  warehouse: string;
+  image?: string; // Base64 image
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  contact: string;
+  email: string;
+  category: string;
+  rating: number;
+  totalSpent: number;
+  image?: string; // Base64 image
+}
+
+export interface Employee {
+  id: string;
+  firstName: string;
+  lastName: string;
+  cin: string; // Moroccan National ID
+  cnssNumber?: string;
+  role: string;
+  department: string;
+  contractType?: 'CDI' | 'CDD' | 'STAGE' | 'INTERIM';
+  familyStatus?: 'CELIBATAIRE' | 'MARIE' | 'DIVORCE' | 'VEUF';
+  dependents?: number;
+  grossSalary: number;
+  salary: number; // legacy net
+  email: string;
+  phone: string;
+  address: string;
+  joinDate: string;
+  hireDate?: string;
+  bankRib?: string;
+  status: 'ACTIVE' | 'ON_LEAVE' | 'TERMINATED';
+}
+
+export interface PayrollRate {
+  id: string;
+  key: string;
+  value: number;
+  effectiveFrom: string;
+  source: string;
+  toVerify: boolean;
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address?: string;
+  ice?: string; // ICE - Identifiant Commun de l'Entreprise (15 digits)
+  if?: string; // Identifiant Fiscal (1-10 digits)
+  rib?: string; // RIB bancaire (24 digits)
+  cin?: string; // CIN - Carte Nationale d'Identité
+  cnssNumber?: string; // CNSS - Caisse Nationale de Sécurité Sociale (9 digits)
+  patente?: string; // Patente / TP - taxe professionnelle
+  rc?: string; // Registre de Commerce
+  rcCourt?: string; // Tribunal de Commerce
+  taxId?: string; // Tax identification number
+  bankRib?: string; // Bank RIB (24 digits)
+  shareCapital?: number; // Capital social (MAD)
+  legalForm?: string; // SARL, SA, SARL AU, SAS, SNC, Entreprise Individuelle...
+  totalSales: number;
+  lastOrderDate: string;
+  tier: 'LEAD' | 'RECURRING' | 'VIP';
+  image?: string; // Base64 image
+}
+
+export interface SaleItem {
+  productId: string;
+  name: string;
+  quantity: number;
+  price: number; // unit price HT (major units)
+  vatRate: number; // percent, from tax_rates (TO VERIFY)
+  lineHt: number;
+  lineVat: number;
+  lineTtc: number;
+}
+
+export interface Sale {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  customerId?: string;
+  buyerIce?: string;
+  buyerAddress?: string;
+  date: string; // ISO string
+  currency: string;
+  subtotalHt: number;
+  totalVat: number;
+  amount: number; // Total TTC
+  items: SaleItem[];
+  status: 'DRAFT' | 'VALIDATED' | 'PAID' | 'PENDING' | 'OVERDUE' | 'CANCELLED';
+  type?: 'SALE' | 'PURCHASE';
+  validatedAt?: string;
+  creditNoteId?: string;
+  paymentTerms?: string;
+  dueDate?: string;
+  paymentMethod?: string;
+  originalCurrency?: string;
+  exchangeRate?: number;
+  rateDate?: string;
+}
+
+export interface CreditNote {
+  id: string;
+  number: string;
+  originalInvoiceId: string;
+  originalInvoiceNumber: string;
+  customerName: string;
+  buyerIce?: string;
+  date: string;
+  currency: string;
+  subtotalHt: number;
+  totalVat: number;
+  amount: number; // TTC
+  items: SaleItem[];
+  reason: string;
+  status: 'DRAFT' | 'VALIDATED';
+  validatedAt?: string;
+}
+
+export interface Transaction {
+  id: string;
+  type: 'INCOME' | 'EXPENSE';
+  category: string;
+  amount: number;
+  localAmount?: number;
+  currency: string;
+  date: string; // ISO string
+  description: string;
+  linkedEntityId?: string;
+  linkedSku?: string;
+  quantity?: number;
+}
+
+export interface AuditLog {
+  id: string;
+  timestamp: string;
+  user: string;
+  action: string;
+  details: string;
+}
+
+export interface SalesHistoryPoint {
+  label: string;
+  amount: number;
+  timestamp: string;
+}
+
+export interface DashboardStats {
+  revenue: number;
+  profit: number;
+  inventoryValue: number;
+  assetValue: number;
+  payrollMonthly: number;
+  orderCount: number;
+  topProducts: { name: string; sales: number; price: number }[];
+  recentActivities: Transaction[];
+  salesHistory: SalesHistoryPoint[];
+  madRates: { code: string; rate: number }[];
+}
+
+export interface Account {
+  id: string;
+  code: string;
+  name: string;
+  type: 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE';
+  parentId?: string;
+}
+
+export interface JournalLine {
+  id: string;
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  debit: number;
+  credit: number;
+  description?: string;
+}
+
+export interface JournalEntry {
+  id: string;
+  number: string;
+  date: string;
+  journal: 'SALES' | 'PURCHASES' | 'BANK' | 'CASH' | 'MISC';
+  description: string;
+  lines: JournalLine[];
+  sourceType?: string;
+  sourceId?: string;
+}
+
+export interface StockMovement {
+  id: string;
+  date: string;
+  productId: string;
+  productName: string;
+  warehouse: string;
+  type: 'IN' | 'OUT' | 'ADJUSTMENT' | 'TRANSFER';
+  quantity: number;
+  unitCost: number;
+  reference: string;
+  note?: string;
+}
+
+export interface DeliveryNote {
+  id: string;
+  number: string;
+  date: string;
+  saleId?: string;
+  saleNumber?: string;
+  customerName: string;
+  buyerIce?: string;
+  items: { productId: string; name: string; quantity: number; delivered: number }[];
+  status: 'DRAFT' | 'VALIDATED';
+  validatedAt?: string;
+}
